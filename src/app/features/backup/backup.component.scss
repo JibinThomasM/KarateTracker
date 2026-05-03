@@ -1,0 +1,155 @@
+.backup-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding-bottom: 80px;
+
+  h2 { margin: 0 0 16px; font-size: 22px; }
+}
+
+.section-card {
+  margin-bottom: 16px;
+  border-radius: 12px !important;
+
+  mat-card-header {
+    .section-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      margin-right: 8px;
+
+      &.export-icon { color: #1a237e; }
+      &.import-icon { color: #e65100; }
+      &.drive-icon { color: #1a73e8; }
+    }
+  }
+}
+
+.drive-card {
+  border-left: 4px solid #1a73e8;
+}
+
+.info-text {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+
+  &.warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #e65100;
+    background: #fff3e0;
+    padding: 12px;
+    border-radius: 8px;
+
+    mat-icon {
+      flex-shrink: 0;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.action-btn {
+  height: 48px;
+  border-radius: 8px;
+  mat-icon { margin-right: 8px; }
+}
+
+.drive-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.drive-backups {
+  h4 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.backup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+
+  &:last-child { border-bottom: none; }
+}
+
+.backup-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .backup-date {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .backup-size {
+    font-size: 12px;
+    color: #999;
+  }
+}
+
+.no-backups {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.drive-spinner {
+  margin: 16px auto;
+}
+
+.file-upload {
+  margin-top: 16px;
+
+  .file-input {
+    display: none;
+  }
+
+  .upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #f5f5f5;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    min-height: 48px;
+
+    &:hover {
+      border-color: #1a237e;
+    }
+  }
+}
+
+.import-message {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+
+  &.error {
+    background: #ffebee;
+    color: #c62828;
+  }
+
+  &.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+}

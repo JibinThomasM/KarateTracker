@@ -1,0 +1,132 @@
+.settings-page {
+  max-width: 700px;
+  margin: 0 auto;  padding-bottom: 80px;
+  h2 { margin: 0 0 16px; font-size: 22px; }
+}
+
+.section-card {
+  margin-bottom: 16px;
+  border-radius: 12px !important;
+
+  mat-card-content {
+    padding-top: 12px;
+  }
+}
+
+.full-width { width: 100%; }
+
+.save-btn { margin-top: 8px; }
+
+// Fee plans
+.fee-plan-list {
+  margin-bottom: 16px;
+}
+
+.fee-plan-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+
+  .plan-name {
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .plan-amount {
+    color: #1a237e;
+    font-weight: 500;
+  }
+}
+
+.add-plan-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+
+  .plan-name-field {
+    flex: 2;
+    min-width: 120px;
+  }
+
+  .plan-amount-field {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  button {
+    margin-top: 4px;
+    height: 48px;
+  }
+}
+
+.password-message {
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: #ffebee;
+  color: #c62828;
+
+  &.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+}
+
+// Dojo management
+.dojo-list {
+  margin-bottom: 12px;
+}
+
+.dojo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+
+  .dojo-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .dojo-name {
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .dojo-location {
+      font-size: 13px;
+      color: #666;
+    }
+  }
+
+  .dojo-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.edit-dojo-form {
+  width: 100%;
+  padding: 8px 0;
+
+  .edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+}
+
+.section-divider {
+  margin: 16px 0;
+}
+
+.add-dojo-form {
+  button {
+    margin-top: 4px;
+  }
+}

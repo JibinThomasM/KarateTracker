@@ -1,0 +1,89 @@
+<mat-sidenav-container class="shell-container">
+  <!-- Side nav for desktop -->
+  <mat-sidenav *ngIf="!isMobile" mode="side" [opened]="sidenavOpened" class="sidenav">
+    <div class="sidenav-header">
+      <img src="assets/logo.jpeg" alt="Logo" class="brand-logo">
+      <span class="brand-text">IJMAA</span>
+    </div>
+
+    <!-- Dojo Selector (desktop sidenav) -->
+    <div class="dojo-selector" *ngIf="dojos.length > 1">
+      <mat-form-field appearance="outline" class="dojo-select-field">
+        <mat-label>Dojo</mat-label>
+        <mat-select [value]="selectedDojoId" (selectionChange)="onDojoChange($event.value)">
+          <mat-option *ngFor="let dojo of dojos" [value]="dojo.id">{{ dojo.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-nav-list>
+      <a mat-list-item *ngFor="let item of navItems" [routerLink]="item.route"
+         routerLinkActive="active-link">
+        <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+        <span matListItemTitle>{{ item.label }}</span>
+      </a>
+      <mat-divider></mat-divider>
+      <a mat-list-item *ngFor="let item of moreItems" [routerLink]="item.route"
+         routerLinkActive="active-link">
+        <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+        <span matListItemTitle>{{ item.label }}</span>
+      </a>
+      <mat-divider></mat-divider>
+      <a mat-list-item (click)="logout()">
+        <mat-icon matListItemIcon>logout</mat-icon>
+        <span matListItemTitle>Logout</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="content-area" [class.mobile]="isMobile">
+    <!-- Top toolbar for mobile -->
+    <mat-toolbar *ngIf="isMobile" color="primary" class="mobile-toolbar">
+      <img src="assets/logo.jpeg" alt="Logo" class="toolbar-logo">
+      <span *ngIf="dojos.length <= 1">IJMAA</span>
+      <!-- Dojo selector in mobile toolbar -->
+      <mat-select *ngIf="dojos.length > 1" [value]="selectedDojoId"
+                  (selectionChange)="onDojoChange($event.value)"
+                  class="mobile-dojo-select">
+        <mat-option *ngFor="let dojo of dojos" [value]="dojo.id">{{ dojo.name }}</mat-option>
+      </mat-select>
+      <span class="spacer"></span>
+      <button mat-icon-button [matMenuTriggerFor]="moreMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #moreMenu="matMenu">
+        <a mat-menu-item *ngFor="let item of moreItems" [routerLink]="item.route">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </a>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <!-- Desktop toolbar -->
+    <mat-toolbar *ngIf="!isMobile" color="primary" class="desktop-toolbar">
+      <span class="spacer"></span>
+      <button mat-icon-button (click)="logout()" matTooltip="Logout">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    <!-- Main content -->
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+
+    <!-- Bottom nav for mobile -->
+    <nav *ngIf="isMobile" class="bottom-nav">
+      <a *ngFor="let item of navItems" [routerLink]="item.route"
+         routerLinkActive="active-tab" class="bottom-nav-item">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </a>
+    </nav>
+  </mat-sidenav-content>
+</mat-sidenav-container>

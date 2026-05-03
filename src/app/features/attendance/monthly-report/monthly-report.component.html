@@ -1,0 +1,52 @@
+<div class="report-page">
+  <h2>Monthly Attendance Report</h2>
+
+  <!-- Month Navigation -->
+  <div class="month-nav">
+    <button mat-icon-button (click)="prevMonth()">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <span class="month-label">{{ formatMonth(selectedMonth) }}</span>
+    <button mat-icon-button (click)="nextMonth()">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-card" *ngIf="report.length > 0">
+    <div class="summary-item">
+      <span class="summary-value">{{ totalClasses }}</span>
+      <span class="summary-label">Classes</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-value students">{{ report.length }}</span>
+      <span class="summary-label">Students</span>
+    </div>
+  </div>
+
+  <!-- Report Table -->
+  <div class="report-list" *ngIf="report.length > 0">
+    <div class="report-header">
+      <span class="col-name">Student</span>
+      <span class="col-present">P</span>
+      <span class="col-absent">A</span>
+      <span class="col-percent">%</span>
+    </div>
+
+    <div class="report-row" *ngFor="let row of report">
+      <div class="col-name">
+        <span class="student-name">{{ row.student_name }}</span>
+        <span class="student-belt">{{ row.belt_rank }}</span>
+      </div>
+      <span class="col-present">{{ row.present }}</span>
+      <span class="col-absent">{{ row.absent }}</span>
+      <span class="col-percent" [style.color]="getPercentageColor(row.percentage)">
+        {{ row.percentage }}%
+      </span>
+    </div>
+  </div>
+
+  <p *ngIf="report.length === 0" class="empty-state">
+    No attendance data for this month.
+  </p>
+</div>

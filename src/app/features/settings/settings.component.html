@@ -1,0 +1,180 @@
+<div class="settings-page">
+  <h2>Settings</h2>
+
+  <!-- Dojo Management -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Dojos</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="dojo-list">
+        <div *ngFor="let dojo of dojos" class="dojo-item">
+          <ng-container *ngIf="editingDojo?.id !== dojo.id">
+            <div class="dojo-info">
+              <span class="dojo-name">{{ dojo.name }}</span>
+              <span class="dojo-location" *ngIf="dojo.location">{{ dojo.location }}</span>
+            </div>
+            <div class="dojo-actions">
+              <button mat-icon-button (click)="startEditDojo(dojo)" matTooltip="Edit">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteDojo(dojo)" matTooltip="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="editingDojo?.id === dojo.id">
+            <div class="edit-dojo-form">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Name</mat-label>
+                <input matInput [(ngModel)]="editingDojo!.name">
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Location</mat-label>
+                <input matInput [(ngModel)]="editingDojo!.location">
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Phone</mat-label>
+                <input matInput [(ngModel)]="editingDojo!.phone">
+              </mat-form-field>
+              <div class="edit-actions">
+                <button mat-raised-button [color]="savedButton === 'editDojo' ? 'accent' : 'primary'" (click)="saveEditDojo()">
+                  <mat-icon>{{ savedButton === 'editDojo' ? 'check_circle' : 'save' }}</mat-icon>
+                  {{ savedButton === 'editDojo' ? 'Saved!' : 'Save' }}
+                </button>
+                <button mat-button (click)="cancelEditDojo()">Cancel</button>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <mat-divider class="section-divider"></mat-divider>
+
+      <h4>Add New Dojo</h4>
+      <div class="add-dojo-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Dojo Name</mat-label>
+          <input matInput [(ngModel)]="newDojoName" placeholder="e.g. Main Branch">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Location</mat-label>
+          <input matInput [(ngModel)]="newDojoLocation" placeholder="e.g. 123 Main St">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Phone</mat-label>
+          <input matInput [(ngModel)]="newDojoPhone" placeholder="e.g. +91 9876543210">
+        </mat-form-field>
+        <button mat-raised-button [color]="savedButton === 'addDojo' ? 'primary' : 'accent'" (click)="addDojo()"
+                [disabled]="!newDojoName.trim()">
+          <mat-icon>{{ savedButton === 'addDojo' ? 'check_circle' : 'add' }}</mat-icon>
+          {{ savedButton === 'addDojo' ? 'Added!' : 'Add Dojo' }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- General Settings -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>General</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Currency Symbol</mat-label>
+        <input matInput [(ngModel)]="currency">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Default Fee Due Day (of month)</mat-label>
+        <input matInput [(ngModel)]="defaultDueDay" inputmode="numeric" type="number" min="1" max="28">
+      </mat-form-field>
+
+      <button mat-raised-button [color]="savedButton === 'general' ? 'accent' : 'primary'" (click)="saveGeneral()">
+        <mat-icon>{{ savedButton === 'general' ? 'check_circle' : 'save' }}</mat-icon>
+        {{ savedButton === 'general' ? 'Saved!' : 'Save Settings' }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- WhatsApp Template -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>WhatsApp Reminder Template</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Message Template</mat-label>
+        <textarea matInput [(ngModel)]="whatsappTemplate" rows="4"></textarea>
+        <mat-hint>
+          Variables: &#123;name&#125;, &#123;amount&#125;, &#123;month&#125;, &#123;currency&#125;
+        </mat-hint>
+      </mat-form-field>
+      <button mat-raised-button [color]="savedButton === 'whatsapp' ? 'accent' : 'primary'" (click)="saveWhatsApp()" class="save-btn">
+        <mat-icon>{{ savedButton === 'whatsapp' ? 'check_circle' : 'save' }}</mat-icon>
+        {{ savedButton === 'whatsapp' ? 'Saved!' : 'Save' }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Fee Plans -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Fee Plans</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="fee-plan-list">
+        <div *ngFor="let plan of feePlans" class="fee-plan-item">
+          <span class="plan-name">{{ plan.name }}</span>
+          <span class="plan-amount">{{ currency }}{{ plan.monthly_amount | number:'1.0-0' }}/mo</span>
+          <button mat-icon-button color="warn" (click)="deleteFeePlan(plan.id!)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="add-plan-form">
+        <mat-form-field appearance="outline" class="plan-name-field">
+          <mat-label>Plan Name</mat-label>
+          <input matInput [(ngModel)]="newPlanName" placeholder="e.g. Standard">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="plan-amount-field">
+          <mat-label>Amount</mat-label>
+          <input matInput [(ngModel)]="newPlanAmount" inputmode="numeric" type="number">
+        </mat-form-field>
+        <button mat-raised-button [color]="savedButton === 'feePlan' ? 'primary' : 'accent'" (click)="addFeePlan()"
+                [disabled]="!newPlanName || !newPlanAmount">
+          <mat-icon>{{ savedButton === 'feePlan' ? 'check_circle' : 'add' }}</mat-icon>
+          {{ savedButton === 'feePlan' ? 'Added!' : 'Add' }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Change Password -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Change Password</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>New Password</mat-label>
+        <input matInput type="password" [(ngModel)]="newPassword">
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Confirm New Password</mat-label>
+        <input matInput type="password" [(ngModel)]="confirmNewPassword">
+      </mat-form-field>
+      <div *ngIf="passwordMessage" class="password-message"
+           [class.success]="passwordMessage.includes('success')">
+        {{ passwordMessage }}
+      </div>
+      <button mat-raised-button [color]="savedButton === 'password' ? 'accent' : 'warn'" (click)="changePassword()"
+              [disabled]="!newPassword">
+        <mat-icon>{{ savedButton === 'password' ? 'check_circle' : 'lock' }}</mat-icon>
+        {{ savedButton === 'password' ? 'Changed!' : 'Change Password' }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+</div>

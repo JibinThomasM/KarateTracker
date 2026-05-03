@@ -1,0 +1,104 @@
+<div class="student-list-page">
+  <div class="page-header">
+    <h2>Students</h2>
+    <button mat-fab color="primary" (click)="addStudent()" class="add-btn" aria-label="Add student">
+      <mat-icon>person_add</mat-icon>
+    </button>
+  </div>
+
+  <!-- Search & Filter -->
+  <div class="filters">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput placeholder="Search students..." [(ngModel)]="searchTerm" (ngModelChange)="applyFilter()">
+      <button mat-icon-button matSuffix *ngIf="searchTerm" (click)="searchTerm=''; applyFilter()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+    <mat-slide-toggle [(ngModel)]="showInactive" (change)="loadStudents()">
+      Show inactive
+    </mat-slide-toggle>
+  </div>
+
+  <!-- Mobile: Card list -->
+  <div *ngIf="isMobile" class="student-cards">
+    <mat-card *ngFor="let student of filteredStudents" class="student-card"
+              [class.inactive]="!student.is_active" (click)="editStudent(student)">
+      <mat-card-content>
+        <div class="card-row">
+          <div class="student-info">
+            <span class="student-name">{{ student.name }}</span>
+            <span class="student-phone">{{ student.phone }}</span>
+          </div>
+          <span class="belt-badge" [style.background]="getBeltColor(student.belt_rank)"
+                [style.color]="getBeltTextColor(student.belt_rank)">
+            {{ student.belt_rank }}
+          </span>
+        </div>
+        <div class="card-actions">
+          <button mat-icon-button (click)="toggleActive(student); $event.stopPropagation()"
+                  [matTooltip]="student.is_active ? 'Deactivate' : 'Activate'">
+            <mat-icon>{{ student.is_active ? 'person_off' : 'person' }}</mat-icon>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <p *ngIf="filteredStudents.length === 0" class="empty-state">
+      No students found. Tap + to add one.
+    </p>
+  </div>
+
+  <!-- Desktop: Table -->
+  <div *ngIf="!isMobile" class="table-container">
+    <table mat-table [dataSource]="filteredStudents" class="student-table">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let s">{{ s.name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="belt_rank">
+        <th mat-header-cell *matHeaderCellDef>Belt</th>
+        <td mat-cell *matCellDef="let s">
+          <span class="belt-badge" [style.background]="getBeltColor(s.belt_rank)"
+                [style.color]="getBeltTextColor(s.belt_rank)">
+            {{ s.belt_rank }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="phone">
+        <th mat-header-cell *matHeaderCellDef>Phone</th>
+        <td mat-cell *matCellDef="let s">{{ s.phone }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let s">
+          <span [class.active-status]="s.is_active" [class.inactive-status]="!s.is_active">
+            {{ s.is_active ? 'Active' : 'Inactive' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let s">
+          <button mat-icon-button (click)="editStudent(s)" matTooltip="Edit">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="toggleActive(s)"
+                  [matTooltip]="s.is_active ? 'Deactivate' : 'Activate'">
+            <mat-icon>{{ s.is_active ? 'person_off' : 'person' }}</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+          [class.inactive]="!row.is_active"></tr>
+    </table>
+    <p *ngIf="filteredStudents.length === 0" class="empty-state">
+      No students found. Click + to add one.
+    </p>
+  </div>
+</div>

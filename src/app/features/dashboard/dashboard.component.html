@@ -1,0 +1,77 @@
+<div class="dashboard">
+  <h2 class="page-title">{{ dojoName }}</h2>
+
+  <div class="cards-grid">
+    <!-- Active Students -->
+    <mat-card class="stat-card" (click)="router.navigate(['/students'])">
+      <mat-card-content>
+        <div class="stat-icon students">
+          <mat-icon>people</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ activeStudents }}</span>
+          <span class="stat-label">Active Students</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Today's Attendance -->
+    <mat-card class="stat-card" (click)="goToAttendance()">
+      <mat-card-content>
+        <div class="stat-icon attendance">
+          <mat-icon>fact_check</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value" *ngIf="attendanceToday.taken">
+            {{ attendanceToday.present }}/{{ attendanceToday.total }}
+          </span>
+          <span class="stat-value not-taken" *ngIf="!attendanceToday.taken">—</span>
+          <span class="stat-label">
+            {{ attendanceToday.taken ? "Today's Attendance" : 'Not Taken Yet' }}
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Overdue Payments -->
+    <mat-card class="stat-card overdue-card" (click)="goToOverdue()">
+      <mat-card-content>
+        <div class="stat-icon overdue">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ overdueCount }}</span>
+          <span class="stat-label">Overdue ({{ currency }}{{ overdueAmount | number:'1.0-0' }})</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Monthly Collection -->
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon collection">
+          <mat-icon>account_balance_wallet</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ currency }}{{ monthlyCollection | number:'1.0-0' }}</span>
+          <span class="stat-label">This Month</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <h3>Quick Actions</h3>
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="goToAttendance()">
+        <mat-icon>fact_check</mat-icon>
+        Take Attendance
+      </button>
+      <button mat-raised-button color="warn" (click)="goToOverdue()" *ngIf="overdueCount > 0">
+        <mat-icon>warning</mat-icon>
+        View Overdue ({{ overdueCount }})
+      </button>
+    </div>
+  </div>
+</div>

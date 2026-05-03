@@ -1,0 +1,57 @@
+<div class="student-form">
+  <h2 mat-dialog-title>{{ isEdit ? 'Edit Student' : 'Add Student' }}</h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="form" class="form-fields">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" placeholder="Student name">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Belt Rank</mat-label>
+        <mat-select formControlName="belt_rank">
+          <mat-option *ngFor="let belt of beltRanks" [value]="belt">{{ belt }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Phone</mat-label>
+        <input matInput formControlName="phone" placeholder="Phone number" inputmode="tel"
+               (blur)="copyPhoneToWhatsapp()">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width whatsapp-field">
+        <mat-label>WhatsApp No.</mat-label>
+        <input matInput formControlName="whatsapp_number" placeholder="WhatsApp number" inputmode="tel">
+        <mat-hint>Same as phone? Leave empty</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Join Date</mat-label>
+        <input matInput type="date" formControlName="join_date">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Fee Plan</mat-label>
+        <mat-select [(value)]="selectedFeePlanId">
+          <mat-option [value]="null">-- None --</mat-option>
+          <mat-option *ngFor="let plan of feePlans" [value]="plan.id">
+            {{ plan.name }} ({{ plan.monthly_amount | number:'1.0-0' }})
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-slide-toggle *ngIf="isEdit" formControlName="is_active" class="active-toggle">
+        Active
+      </mat-slide-toggle>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()">Cancel</button>
+    <button mat-raised-button color="primary" (click)="save()" [disabled]="form.invalid">
+      {{ isEdit ? 'Update' : 'Add' }}
+    </button>
+  </mat-dialog-actions>
+</div>

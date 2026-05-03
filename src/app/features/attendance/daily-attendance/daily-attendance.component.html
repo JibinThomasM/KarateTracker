@@ -1,0 +1,72 @@
+<div class="attendance-page">
+  <div class="page-header">
+    <h2>Attendance</h2>
+    <button mat-stroked-button color="primary" routerLink="monthly" class="report-btn">
+      <mat-icon>assessment</mat-icon> Monthly Report
+    </button>
+  </div>
+
+  <!-- Date Navigation -->
+  <div class="date-nav">
+    <button mat-icon-button (click)="prevDay()">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <input type="date" [(ngModel)]="selectedDate" (change)="onDateChange()" class="date-input">
+    <button mat-icon-button (click)="nextDay()">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+    <span class="today-badge" *ngIf="isToday()">Today</span>
+  </div>
+
+  <!-- Summary bar -->
+  <div class="summary-bar">
+    <span class="summary-item present">
+      <mat-icon>check_circle</mat-icon> {{ getPresentCount() }}
+    </span>
+    <span class="summary-item absent">
+      <mat-icon>cancel</mat-icon> {{ entries.length - getPresentCount() }}
+    </span>
+    <span class="summary-item total">
+      Total: {{ entries.length }}
+    </span>
+  </div>
+
+  <!-- Bulk actions -->
+  <div class="bulk-actions">
+    <button mat-stroked-button (click)="markAllPresent()" color="primary">
+      <mat-icon>done_all</mat-icon> All Present
+    </button>
+    <button mat-stroked-button (click)="markAllAbsent()">
+      <mat-icon>clear</mat-icon> All Absent
+    </button>
+  </div>
+
+  <!-- Attendance list -->
+  <div class="attendance-list">
+    <div *ngFor="let entry of entries" class="attendance-item" (click)="toggleStatus(entry)"
+         [class.status-present]="entry.status === 'present'"
+         [class.status-absent]="entry.status === 'absent'">
+      <div class="item-info">
+        <span class="item-name">{{ entry.student.name }}</span>
+        <span class="item-belt">{{ entry.student.belt_rank }}</span>
+      </div>
+      <div class="status-toggle">
+        <mat-icon *ngIf="entry.status === 'present'" class="status-icon present">check_circle</mat-icon>
+        <mat-icon *ngIf="entry.status === 'absent'" class="status-icon absent">cancel</mat-icon>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="entries.length === 0" class="empty-state">
+    No active students. Add students first.
+  </p>
+
+  <!-- Save button -->
+  <div class="save-section" *ngIf="entries.length > 0">
+    <button mat-raised-button color="primary" (click)="saveAttendance()" class="save-btn"
+            [disabled]="isSaved">
+      <mat-icon>save</mat-icon>
+      {{ isSaved ? 'Saved!' : (hasExisting ? 'Update Attendance' : 'Save Attendance') }}
+    </button>
+  </div>
+</div>

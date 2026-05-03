@@ -1,0 +1,111 @@
+.dashboard {
+  max-width: 800px;
+  margin: 0 auto;  padding-bottom: 80px;}
+
+.page-title {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stat-card {
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+  border-radius: 12px !important;
+
+  &:active {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+
+  @media (min-width: 768px) {
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+  }
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px !important;
+  }
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    color: white;
+    font-size: 24px;
+  }
+
+  &.students { background: #1a237e; }
+  &.attendance { background: #2e7d32; }
+  &.overdue { background: #e65100; }
+  &.collection { background: #4a148c; }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+
+  &.not-taken {
+    color: #999;
+  }
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-actions {
+  margin-top: 24px;
+
+  h3 {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0 0 12px;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    button {
+      height: 48px;
+      border-radius: 8px;
+
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}

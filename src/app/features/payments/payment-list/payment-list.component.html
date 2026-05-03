@@ -1,0 +1,119 @@
+<div class="payments-page">
+  <div class="page-header">
+    <h2>Payments</h2>
+    <button mat-raised-button color="primary" (click)="generateFees()" class="generate-btn">
+      <mat-icon>add_circle</mat-icon>
+      Generate Fees
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="month-nav">
+      <button mat-icon-button (click)="prevMonth()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <span class="month-label">{{ formatMonth(selectedMonth) }}</span>
+      <button mat-icon-button (click)="nextMonth()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+
+    <mat-form-field appearance="outline" class="status-field">
+      <mat-label>Status</mat-label>
+      <mat-select [(ngModel)]="statusFilter" (selectionChange)="onFilterChange()">
+        <mat-option value="">All</mat-option>
+        <mat-option value="pending">Pending</mat-option>
+        <mat-option value="paid">Paid</mat-option>
+        <mat-option value="overdue">Overdue</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Mobile: Card list -->
+  <div *ngIf="isMobile" class="payment-cards">
+    <mat-card *ngFor="let p of payments" class="payment-card" [class]="'status-' + p.status">
+      <mat-card-content>
+        <div class="card-header">
+          <span class="card-name">{{ p.student_name }}</span>
+          <span class="status-badge" [style.color]="getStatusColor(p.status)">
+            {{ p.status | uppercase }}
+          </span>
+        </div>
+        <div class="card-details">
+          <span>Due: {{ currency }}{{ p.amount_due | number:'1.0-0' }}</span>
+          <span>Paid: {{ currency }}{{ p.amount_paid | number:'1.0-0' }}</span>
+          <span>Due by: {{ p.due_date }}</span>
+        </div>
+        <div class="card-actions">
+          <button mat-stroked-button color="primary" *ngIf="p.status !== 'paid'" (click)="markPaid(p)"
+                  class="action-btn">
+            <mat-icon>check</mat-icon> Mark Paid
+          </button>
+          <button mat-stroked-button *ngIf="p.status !== 'paid'" (click)="sendWhatsappReminder(p)"
+                  class="whatsapp-btn action-btn">
+            <mat-icon>textsms</mat-icon> WhatsApp
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <p *ngIf="payments.length === 0" class="empty-state">
+      No payment records found. Click "Generate Fees" to create them.
+    </p>
+  </div>
+
+  <!-- Desktop: Table -->
+  <div *ngIf="!isMobile" class="table-container">
+    <table mat-table [dataSource]="payments" class="payment-table">
+      <ng-container matColumnDef="student_name">
+        <th mat-header-cell *matHeaderCellDef>Student</th>
+        <td mat-cell *matCellDef="let p">{{ p.student_name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="amount_due">
+        <th mat-header-cell *matHeaderCellDef>Due</th>
+        <td mat-cell *matCellDef="let p">{{ currency }}{{ p.amount_due | number:'1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="amount_paid">
+        <th mat-header-cell *matHeaderCellDef>Paid</th>
+        <td mat-cell *matCellDef="let p">{{ currency }}{{ p.amount_paid | number:'1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="due_date">
+        <th mat-header-cell *matHeaderCellDef>Due Date</th>
+        <td mat-cell *matCellDef="let p">{{ p.due_date }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let p">
+          <span class="status-badge" [style.color]="getStatusColor(p.status)">
+            {{ p.status | uppercase }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let p">
+          <button mat-icon-button color="primary" *ngIf="p.status !== 'paid'"
+                  (click)="markPaid(p)" matTooltip="Mark Paid">
+            <mat-icon>check_circle</mat-icon>
+          </button>
+          <button mat-icon-button *ngIf="p.status !== 'paid'"
+                  (click)="sendWhatsappReminder(p)" matTooltip="Send WhatsApp Reminder"
+                  class="whatsapp-icon-btn">
+            <mat-icon>textsms</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    <p *ngIf="payments.length === 0" class="empty-state">
+      No payment records found. Click "Generate Fees" to create them.
+    </p>
+  </div>
+</div>
