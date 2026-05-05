@@ -3,6 +3,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { DojoService } from '../../core/services/dojo.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { Dojo } from '../../core/models/dojo.model';
 
 @Component({
@@ -14,7 +15,7 @@ export class ShellComponent implements OnInit {
   isMobile = false;
   sidenavOpened = false;
   dojos: Dojo[] = [];
-  selectedDojoId = 0;
+  selectedDojoId = '';
 
   navItems = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
@@ -32,28 +33,31 @@ export class ShellComponent implements OnInit {
     private breakpointObserver: BreakpointObserver,
     private authService: AuthService,
     private dojoService: DojoService,
+    private settingsService: SettingsService,
     private router: Router
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     this.breakpointObserver.observe([Breakpoints.Handset]).subscribe(result => {
       this.isMobile = result.matches;
       if (!this.isMobile) {
         this.sidenavOpened = true;
       }
     });
-    this.loadDojos();
+    await this.settingsService.loadSettings();
+    await this.dojoService.initSelection();
+    await this.loadDojos();
     this.dojoService.getSelectedDojo$().subscribe(id => {
       this.selectedDojoId = id;
     });
   }
 
-  loadDojos() {
-    this.dojos = this.dojoService.getAll();
+  async loadDojos() {
+    this.dojos = await this.dojoService.getAll();
     this.selectedDojoId = this.dojoService.getSelectedDojoId();
   }
 
-  onDojoChange(dojoId: number) {
+  onDojoChange(dojoId: string) {
     this.dojoService.selectDojo(dojoId);
   }
 
@@ -61,8 +65,8 @@ export class ShellComponent implements OnInit {
     this.sidenavOpened = !this.sidenavOpened;
   }
 
-  logout() {
-    this.authService.logout();
+  async logout() {
+    await this.authService.logout();
     this.router.navigate(['/login']);
   }
 }

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { DatabaseService } from './database.service';
+import { SettingsService } from './settings.service';
 
 @Injectable({ providedIn: 'root' })
 export class WhatsappService {
-  constructor(private dbService: DatabaseService) {}
+  constructor(private settingsService: SettingsService) {}
 
   buildReminderUrl(whatsappNumber: string, studentName: string, amount: number, monthYear: string): string {
     const template = this.getTemplate();
@@ -30,17 +30,11 @@ export class WhatsappService {
   }
 
   getTemplate(): string {
-    const result = this.dbService.query<{ value: string }>(
-      "SELECT value FROM settings WHERE key = 'whatsapp_template'"
-    );
-    return result[0]?.value || 'Hi {name}, your fee of {currency}{amount} for {month} is overdue.';
+    return this.settingsService.get('whatsapp_template') || 'Hi {name}, your fee of {currency}{amount} for {month} is overdue.';
   }
 
   getCurrency(): string {
-    const result = this.dbService.query<{ value: string }>(
-      "SELECT value FROM settings WHERE key = 'currency'"
-    );
-    return result[0]?.value || '₹';
+    return this.settingsService.get('currency') || '₹';
   }
 
   private formatMonth(monthYear: string): string {

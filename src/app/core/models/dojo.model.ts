@@ -1,7 +1,7 @@
 export interface Dojo {
-  id?: number;
+  id?: string;
   name: string;
   location: string;
   phone: string;
-  is_active: number;
+  isActive: boolean;
 }

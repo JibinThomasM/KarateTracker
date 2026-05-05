@@ -85,7 +85,7 @@
     <mat-card-header>
       <mat-icon class="section-icon import-icon">cloud_upload</mat-icon>
       <mat-card-title>Restore from Backup</mat-card-title>
-      <mat-card-subtitle>Upload a previously exported .db file</mat-card-subtitle>
+      <mat-card-subtitle>Upload a previously exported backup file</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
       <p class="info-text warning">
@@ -95,10 +95,10 @@
       </p>
 
       <div class="file-upload">
-        <input type="file" accept=".db" (change)="onFileSelected($event)" id="fileInput"
+        <input type="file" accept=".json,.db" (change)="onFileSelected($event)" id="fileInput"
                class="file-input">
         <label for="fileInput" mat-raised-button class="upload-label">
-          <mat-icon>upload_file</mat-icon> Select .db File
+          <mat-icon>upload_file</mat-icon> Select Backup File
         </label>
       </div>
 

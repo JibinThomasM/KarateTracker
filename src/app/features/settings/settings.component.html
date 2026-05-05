@@ -127,7 +127,7 @@
       <div class="fee-plan-list">
         <div *ngFor="let plan of feePlans" class="fee-plan-item">
           <span class="plan-name">{{ plan.name }}</span>
-          <span class="plan-amount">{{ currency }}{{ plan.monthly_amount | number:'1.0-0' }}/mo</span>
+          <span class="plan-amount">{{ currency }}{{ plan.monthlyAmount | number:'1.0-0' }}/mo</span>
           <button mat-icon-button color="warn" (click)="deleteFeePlan(plan.id!)">
             <mat-icon>delete</mat-icon>
           </button>
@@ -152,29 +152,4 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Change Password -->
-  <mat-card class="section-card">
-    <mat-card-header>
-      <mat-card-title>Change Password</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>New Password</mat-label>
-        <input matInput type="password" [(ngModel)]="newPassword">
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Confirm New Password</mat-label>
-        <input matInput type="password" [(ngModel)]="confirmNewPassword">
-      </mat-form-field>
-      <div *ngIf="passwordMessage" class="password-message"
-           [class.success]="passwordMessage.includes('success')">
-        {{ passwordMessage }}
-      </div>
-      <button mat-raised-button [color]="savedButton === 'password' ? 'accent' : 'warn'" (click)="changePassword()"
-              [disabled]="!newPassword">
-        <mat-icon>{{ savedButton === 'password' ? 'check_circle' : 'lock' }}</mat-icon>
-        {{ savedButton === 'password' ? 'Changed!' : 'Change Password' }}
-      </button>
-    </mat-card-content>
-  </mat-card>
 </div>

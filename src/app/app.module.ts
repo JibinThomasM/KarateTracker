@@ -1,19 +1,15 @@
-import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ShellModule } from './features/shell/shell.module';
-import { DatabaseService } from './core/services/database.service';
-import { DojoService } from './core/services/dojo.service';
 
-function initializeApp(dbService: DatabaseService, dojoService: DojoService) {
-  return async () => {
-    await dbService.init();
-    dojoService.initSelection();
-  };
-}
+import { AngularFireModule } from '@angular/fire/compat';
+import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
+import { AngularFireAuthModule } from '@angular/fire/compat/auth';
+import { environment } from '../environments/environment';
 
 @NgModule({
   declarations: [
@@ -23,16 +19,12 @@ function initializeApp(dbService: DatabaseService, dojoService: DojoService) {
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
-    ShellModule
+    ShellModule,
+    AngularFireModule.initializeApp(environment.firebase),
+    AngularFirestoreModule.enablePersistence({ synchronizeTabs: true }),
+    AngularFireAuthModule
   ],
-  providers: [
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeApp,
-      deps: [DatabaseService, DojoService],
-      multi: true
-    }
-  ],
+  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

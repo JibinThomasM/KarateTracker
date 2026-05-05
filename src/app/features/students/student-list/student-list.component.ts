@@ -18,7 +18,7 @@ export class StudentListComponent implements OnInit, OnDestroy {
   searchTerm = '';
   showInactive = false;
   isMobile = false;
-  displayedColumns = ['name', 'belt_rank', 'phone', 'status', 'actions'];
+  displayedColumns = ['name', 'beltRank', 'phone', 'status', 'actions'];
   private dojoSub!: Subscription;
 
   constructor(
@@ -41,8 +41,8 @@ export class StudentListComponent implements OnInit, OnDestroy {
     this.dojoSub.unsubscribe();
   }
 
-  loadStudents() {
-    this.students = this.showInactive ? this.studentService.getAll() : this.studentService.getActive();
+  async loadStudents() {
+    this.students = this.showInactive ? await this.studentService.getAll() : await this.studentService.getActive();
     this.applyFilter();
   }
 
@@ -85,16 +85,17 @@ export class StudentListComponent implements OnInit, OnDestroy {
     });
   }
 
-  toggleActive(student: Student) {
-    this.studentService.toggleActive(student.id!, !student.is_active);
-    this.loadStudents();
+  async toggleActive(student: Student) {
+    await this.studentService.toggleActive(student.id!, !student.isActive);
+    await this.loadStudents();
   }
 
   getBeltColor(rank: string): string {
     const colors: Record<string, string> = {
       'White': '#f5f5f5', 'Yellow': '#ffeb3b', 'Orange': '#ff9800',
       'Green': '#4caf50', 'Blue': '#2196f3', 'Purple': '#9c27b0',
-      'Brown': '#795548', 'Black': '#212121'
+      'Brown4': '#a1887f', 'Brown3': '#8d6e63', 'Brown2': '#795548', 'Brown1': '#5d4037',
+      'Black': '#212121', 'Red': '#f44336'
     };
     return colors[rank] || '#e0e0e0';
   }

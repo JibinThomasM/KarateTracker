@@ -1,27 +1,22 @@
 export interface Payment {
-  id?: number;
-  student_id: number;
-  month_year: string; // YYYY-MM
-  amount_due: number;
-  amount_paid: number;
-  due_date: string; // YYYY-MM-DD
-  paid_date: string | null;
+  id?: string;
+  studentId: string;
+  dojoId: string;
+  monthYear: string; // YYYY-MM
+  amountDue: number;
+  amountPaid: number;
+  dueDate: string; // YYYY-MM-DD
+  paidDate: string | null;
   status: 'pending' | 'paid' | 'overdue';
+  studentName: string;
+  whatsappNumber: string;
 }
 
-export interface PaymentRecord extends Payment {
-  student_name: string;
-  whatsapp_number: string;
-}
+export type PaymentRecord = Payment;
 
 export interface FeePlan {
-  id?: number;
-  dojo_id: number;
+  id?: string;
+  dojoId: string;
   name: string;
-  monthly_amount: number;
-}
-
-export interface StudentFeePlan {
-  student_id: number;
-  fee_plan_id: number;
+  monthlyAmount: number;
 }

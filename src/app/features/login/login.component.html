@@ -3,11 +3,18 @@
     <div class="logo-section">
       <img src="assets/logo.jpeg" alt="Indo-Japan Martial Arts Academy" class="logo-img">
       <h1>Indo-Japan Martial Arts Academy</h1>
-      <p *ngIf="isFirstTime">Welcome! Set up your admin password to get started.</p>
-      <p *ngIf="!isFirstTime">Enter your password to continue.</p>
+      <p *ngIf="isFirstTime">Welcome! Create your admin account to get started.</p>
+      <p *ngIf="!isFirstTime">Sign in to continue.</p>
     </div>
 
     <form (ngSubmit)="onSubmit()" class="login-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" [(ngModel)]="email" name="email"
+               placeholder="Enter email" required>
+        <mat-icon matSuffix>email</mat-icon>
+      </mat-form-field>
+
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Password</mat-label>
         <input matInput type="password" [(ngModel)]="password" name="password"
@@ -28,9 +35,9 @@
       </div>
 
       <button mat-raised-button color="primary" type="submit" class="full-width login-btn"
-              [disabled]="loading || !password">
+              [disabled]="loading || !email || !password">
         <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
-        <span *ngIf="!loading">{{ isFirstTime ? 'Set Password & Enter' : 'Login' }}</span>
+        <span *ngIf="!loading">{{ isFirstTime ? 'Create Account' : 'Sign In' }}</span>
       </button>
     </form>
   </div>

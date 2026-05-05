@@ -1,152 +1,178 @@
 import { Injectable } from '@angular/core';
-import { DatabaseService } from './database.service';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { firstValueFrom } from 'rxjs';
 import { DojoService } from './dojo.service';
+import { SettingsService } from './settings.service';
+import { StudentService } from './student.service';
 import { Payment, PaymentRecord, FeePlan } from '../models/payment.model';
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
-  constructor(private dbService: DatabaseService, private dojoService: DojoService) {}
+  constructor(
+    private afs: AngularFirestore,
+    private dojoService: DojoService,
+    private settingsService: SettingsService,
+    private studentService: StudentService
+  ) {}
 
-  private get dojoId(): number {
+  private get dojoId(): string {
     return this.dojoService.getSelectedDojoId();
   }
 
   // Fee Plans
-  getFeePlans(): FeePlan[] {
-    return this.dbService.query<FeePlan>('SELECT * FROM fee_plans WHERE dojo_id = ? ORDER BY name', [this.dojoId]);
+  async getFeePlans(): Promise<FeePlan[]> {
+    const snapshot = await firstValueFrom(
+      this.afs.collection<FeePlan>('feePlans', ref =>
+        ref.where('dojoId', '==', this.dojoId)
+      ).get()
+    );
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  addFeePlan(plan: Omit<FeePlan, 'id'>): void {
-    this.dbService.run('INSERT INTO fee_plans (name, monthly_amount, dojo_id) VALUES (?, ?, ?)',
-      [plan.name, plan.monthly_amount, this.dojoId]);
+  async addFeePlan(plan: Omit<FeePlan, 'id'>): Promise<void> {
+    await this.afs.collection('feePlans').add({ ...plan, dojoId: this.dojoId });
   }
 
-  updateFeePlan(plan: FeePlan): void {
-    this.dbService.run('UPDATE fee_plans SET name = ?, monthly_amount = ? WHERE id = ? AND dojo_id = ?',
-      [plan.name, plan.monthly_amount, plan.id, this.dojoId]);
+  async updateFeePlan(plan: FeePlan): Promise<void> {
+    const { id, ...data } = plan;
+    await this.afs.doc(`feePlans/${id}`).update(data);
   }
 
-  deleteFeePlan(id: number): void {
-    this.dbService.run('DELETE FROM fee_plans WHERE id = ? AND dojo_id = ?', [id, this.dojoId]);
+  async deleteFeePlan(id: string): Promise<void> {
+    await this.afs.doc(`feePlans/${id}`).delete();
   }
 
   // Payments
-  getPayments(monthYear?: string, status?: string): PaymentRecord[] {
-    let sql = `SELECT p.*, s.name as student_name, s.whatsapp_number
-               FROM payments p
-               JOIN students s ON s.id = p.student_id
-               WHERE s.dojo_id = ?`;
-    const params: unknown[] = [this.dojoId];
+  async getPayments(monthYear?: string, status?: string): Promise<PaymentRecord[]> {
+    let results: PaymentRecord[];
 
     if (monthYear) {
-      sql += ' AND p.month_year = ?';
-      params.push(monthYear);
+      const snapshot = await firstValueFrom(
+        this.afs.collection<Payment>('payments', ref => {
+          let q = ref.where('dojoId', '==', this.dojoId).where('monthYear', '==', monthYear);
+          if (status) q = q.where('status', '==', status);
+          return q;
+        }).get()
+      );
+      results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaymentRecord));
+    } else {
+      const snapshot = await firstValueFrom(
+        this.afs.collection<Payment>('payments', ref => {
+          let q = ref.where('dojoId', '==', this.dojoId);
+          if (status) q = q.where('status', '==', status);
+          return q;
+        }).get()
+      );
+      results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaymentRecord));
     }
-    if (status) {
-      sql += ' AND p.status = ?';
-      params.push(status);
-    }
-    sql += ' ORDER BY s.name';
-    return this.dbService.query<PaymentRecord>(sql, params);
+
+    return results.sort((a, b) => (a.studentName || '').localeCompare(b.studentName || ''));
   }
 
-  getOverduePayments(): PaymentRecord[] {
+  async getOverduePayments(): Promise<PaymentRecord[]> {
     const today = new Date().toISOString().split('T')[0];
-    return this.dbService.query<PaymentRecord>(
-      `SELECT p.*, s.name as student_name, s.whatsapp_number
-       FROM payments p
-       JOIN students s ON s.id = p.student_id
-       WHERE s.dojo_id = ? AND (p.status = 'overdue' OR (p.status = 'pending' AND p.due_date < ?))
-       ORDER BY p.due_date ASC`,
-      [this.dojoId, today]
+    const snapshot = await firstValueFrom(
+      this.afs.collection<Payment>('payments', ref =>
+        ref.where('dojoId', '==', this.dojoId)
+           .where('status', 'in', ['overdue', 'pending'])
+      ).get()
     );
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as PaymentRecord))
+      .filter(p => p.status === 'overdue' || (p.status === 'pending' && p.dueDate < today))
+      .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
   }
 
-  markPaid(paymentId: number, amountPaid: number): void {
+  async markPaid(paymentId: string, amountPaid: number): Promise<void> {
     const today = new Date().toISOString().split('T')[0];
-    this.dbService.run(
-      `UPDATE payments SET amount_paid = ?, paid_date = ?, status = 'paid' WHERE id = ?`,
-      [amountPaid, today, paymentId]
-    );
+    await this.afs.doc(`payments/${paymentId}`).update({
+      amountPaid,
+      paidDate: today,
+      status: 'paid'
+    });
   }
 
-  generateMonthlyFees(monthYear: string): number {
-    const defaultDueDay = this.getSettingValue('default_due_day') || '5';
+  async generateMonthlyFees(monthYear: string): Promise<number> {
+    await this.settingsService.loadSettings();
+    const defaultDueDay = String(this.settingsService.get('default_due_day') || '5');
     const dueDate = `${monthYear}-${defaultDueDay.padStart(2, '0')}`;
 
-    const studentsWithPlans = this.dbService.query<{
-      student_id: number; monthly_amount: number;
-    }>(
-      `SELECT sfp.student_id, fp.monthly_amount
-       FROM student_fee_plan sfp
-       JOIN fee_plans fp ON fp.id = sfp.fee_plan_id
-       JOIN students s ON s.id = sfp.student_id
-       WHERE s.is_active = 1 AND s.dojo_id = ?`,
-      [this.dojoId]
-    );
+    // Get active students with fee plans
+    const students = await this.studentService.getActive();
+    const studentsWithPlans: { student: any; plan: FeePlan }[] = [];
+
+    for (const student of students) {
+      if (student.feePlanId) {
+        const planDoc = await firstValueFrom(this.afs.doc<FeePlan>(`feePlans/${student.feePlanId}`).get());
+        if (planDoc.exists) {
+          studentsWithPlans.push({ student, plan: { id: planDoc.id, ...planDoc.data()! } });
+        }
+      }
+    }
 
     let generated = 0;
-    for (const sp of studentsWithPlans) {
-      const existing = this.dbService.query<{ id: number }>(
-        'SELECT id FROM payments WHERE student_id = ? AND month_year = ?',
-        [sp.student_id, monthYear]
-      );
-      if (existing.length === 0) {
-        this.dbService.run(
-          `INSERT INTO payments (student_id, month_year, amount_due, amount_paid, due_date, status)
-           VALUES (?, ?, ?, 0, ?, 'pending')`,
-          [sp.student_id, monthYear, sp.monthly_amount, dueDate]
-        );
+    const batch = this.afs.firestore.batch();
+
+    for (const { student, plan } of studentsWithPlans) {
+      const docId = `${student.id}_${monthYear}`;
+      const existing = await firstValueFrom(this.afs.doc(`payments/${docId}`).get());
+      if (!existing.exists) {
+        const ref = this.afs.doc(`payments/${docId}`).ref;
+        batch.set(ref, {
+          studentId: student.id,
+          dojoId: this.dojoId,
+          monthYear,
+          amountDue: plan.monthlyAmount,
+          amountPaid: 0,
+          dueDate,
+          status: 'pending',
+          studentName: student.name,
+          whatsappNumber: student.whatsappNumber || ''
+        });
         generated++;
       }
     }
+
+    if (generated > 0) await batch.commit();
     return generated;
   }
 
-  updateOverdueStatuses(): void {
+  async updateOverdueStatuses(): Promise<void> {
     const today = new Date().toISOString().split('T')[0];
-    this.dbService.run(
-      `UPDATE payments SET status = 'overdue'
-       WHERE status = 'pending' AND due_date < ?
-       AND student_id IN (SELECT id FROM students WHERE dojo_id = ?)`,
-      [today, this.dojoId]
+    const snapshot = await firstValueFrom(
+      this.afs.collection<Payment>('payments', ref =>
+        ref.where('dojoId', '==', this.dojoId).where('status', '==', 'pending')
+      ).get()
     );
+
+    const batch = this.afs.firestore.batch();
+    let count = 0;
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.dueDate < today) {
+        batch.update(doc.ref, { status: 'overdue' });
+        count++;
+      }
+    });
+    if (count > 0) await batch.commit();
   }
 
-  getOverdueCount(): number {
-    const today = new Date().toISOString().split('T')[0];
-    const result = this.dbService.query<{ count: number }>(
-      `SELECT COUNT(*) as count FROM payments p
-       JOIN students s ON s.id = p.student_id
-       WHERE s.dojo_id = ? AND (p.status = 'overdue' OR (p.status = 'pending' AND p.due_date < ?))`,
-      [this.dojoId, today]
-    );
-    return result[0]?.count || 0;
+  async getOverdueCount(): Promise<number> {
+    const overdue = await this.getOverduePayments();
+    return overdue.length;
   }
 
-  getOverdueTotalAmount(): number {
-    const today = new Date().toISOString().split('T')[0];
-    const result = this.dbService.query<{ total: number }>(
-      `SELECT COALESCE(SUM(p.amount_due - p.amount_paid), 0) as total FROM payments p
-       JOIN students s ON s.id = p.student_id
-       WHERE s.dojo_id = ? AND (p.status = 'overdue' OR (p.status = 'pending' AND p.due_date < ?))`,
-      [this.dojoId, today]
-    );
-    return result[0]?.total || 0;
+  async getOverdueTotalAmount(): Promise<number> {
+    const overdue = await this.getOverduePayments();
+    return overdue.reduce((sum, p) => sum + (p.amountDue - p.amountPaid), 0);
   }
 
-  getMonthlyCollection(monthYear: string): number {
-    const result = this.dbService.query<{ total: number }>(
-      `SELECT COALESCE(SUM(p.amount_paid), 0) as total FROM payments p
-       JOIN students s ON s.id = p.student_id
-       WHERE p.month_year = ? AND s.dojo_id = ?`,
-      [monthYear, this.dojoId]
+  async getMonthlyCollection(monthYear: string): Promise<number> {
+    const snapshot = await firstValueFrom(
+      this.afs.collection<Payment>('payments', ref =>
+        ref.where('dojoId', '==', this.dojoId).where('monthYear', '==', monthYear)
+      ).get()
     );
-    return result[0]?.total || 0;
-  }
-
-  private getSettingValue(key: string): string | null {
-    const result = this.dbService.query<{ value: string }>('SELECT value FROM settings WHERE key = ?', [key]);
-    return result[0]?.value || null;
+    return snapshot.docs.reduce((sum, doc) => sum + (doc.data().amountPaid || 0), 0);
   }
 }

@@ -91,20 +91,20 @@ export class GoogleDriveService {
       const folderId = await this.getOrCreateFolder();
 
       // Export database
-      const data = this.dbService.exportDatabase();
+      const data = await this.dbService.exportDatabase();
       const now = new Date();
-      const fileName = `backup-${now.toISOString().replace(/[:.]/g, '-')}.db`;
+      const fileName = `backup-${now.toISOString().replace(/[:.]/g, '-')}.json`;
 
       // Upload file
       const metadata = {
         name: fileName,
         parents: [folderId],
-        mimeType: 'application/octet-stream'
+        mimeType: 'application/json'
       };
 
       const form = new FormData();
       form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-      form.append('file', new Blob([data], { type: 'application/octet-stream' }));
+      form.append('file', new Blob([data], { type: 'application/json' }));
 
       const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
         method: 'POST',

@@ -10,7 +10,7 @@
 
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Belt Rank</mat-label>
-        <mat-select formControlName="belt_rank">
+        <mat-select formControlName="beltRank">
           <mat-option *ngFor="let belt of beltRanks" [value]="belt">{{ belt }}</mat-option>
         </mat-select>
       </mat-form-field>
@@ -23,13 +23,13 @@
 
       <mat-form-field appearance="outline" class="full-width whatsapp-field">
         <mat-label>WhatsApp No.</mat-label>
-        <input matInput formControlName="whatsapp_number" placeholder="WhatsApp number" inputmode="tel">
+        <input matInput formControlName="whatsappNumber" placeholder="WhatsApp number" inputmode="tel">
         <mat-hint>Same as phone? Leave empty</mat-hint>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Join Date</mat-label>
-        <input matInput type="date" formControlName="join_date">
+        <input matInput type="date" formControlName="joinDate">
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
@@ -37,12 +37,12 @@
         <mat-select [(value)]="selectedFeePlanId">
           <mat-option [value]="null">-- None --</mat-option>
           <mat-option *ngFor="let plan of feePlans" [value]="plan.id">
-            {{ plan.name }} ({{ plan.monthly_amount | number:'1.0-0' }})
+            {{ plan.name }} ({{ plan.monthlyAmount | number:'1.0-0' }})
           </mat-option>
         </mat-select>
       </mat-form-field>
 
-      <mat-slide-toggle *ngIf="isEdit" formControlName="is_active" class="active-toggle">
+      <mat-slide-toggle *ngIf="isEdit" formControlName="isActive" class="active-toggle">
         Active
       </mat-slide-toggle>
     </form>

@@ -16,7 +16,7 @@ export class StudentFormComponent implements OnInit {
   isEdit = false;
   beltRanks = BELT_RANKS;
   feePlans: FeePlan[] = [];
-  selectedFeePlanId: number | null = null;
+  selectedFeePlanId: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -26,48 +26,50 @@ export class StudentFormComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: { student: Student | null }
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     this.isEdit = !!this.data.student;
-    this.feePlans = this.paymentService.getFeePlans();
 
     this.form = this.fb.group({
       name: [this.data.student?.name || '', Validators.required],
-      belt_rank: [this.data.student?.belt_rank || 'White', Validators.required],
+      beltRank: [this.data.student?.beltRank || 'White', Validators.required],
       phone: [this.data.student?.phone || '', Validators.required],
-      whatsapp_number: [this.data.student?.whatsapp_number || ''],
-      join_date: [this.data.student?.join_date || new Date().toISOString().split('T')[0], Validators.required],
-      is_active: [this.data.student?.is_active ?? 1]
+      whatsappNumber: [this.data.student?.whatsappNumber || ''],
+      joinDate: [this.data.student?.joinDate || new Date().toISOString().split('T')[0], Validators.required],
+      isActive: [this.data.student?.isActive ?? true]
     });
 
+    this.feePlans = await this.paymentService.getFeePlans();
+
     if (this.isEdit && this.data.student?.id) {
-      const plan = this.studentService.getFeePlan(this.data.student.id);
-      this.selectedFeePlanId = plan?.fee_plan_id || null;
+      const plan = await this.studentService.getFeePlan(this.data.student.id);
+      this.selectedFeePlanId = plan?.feePlanId || null;
     }
   }
 
   copyPhoneToWhatsapp() {
-    if (!this.form.get('whatsapp_number')?.value) {
-      this.form.patchValue({ whatsapp_number: this.form.get('phone')?.value });
+    if (!this.form.get('whatsappNumber')?.value) {
+      this.form.patchValue({ whatsappNumber: this.form.get('phone')?.value });
     }
   }
 
-  save() {
+  async save() {
     if (this.form.invalid) return;
 
     const studentData = this.form.value;
 
     if (this.isEdit && this.data.student?.id) {
-      this.studentService.update({ ...studentData, id: this.data.student.id });
+      await this.studentService.update({ ...studentData, id: this.data.student.id });
       if (this.selectedFeePlanId) {
-        this.studentService.assignFeePlan(this.data.student.id, this.selectedFeePlanId);
+        await this.studentService.assignFeePlan(this.data.student.id, this.selectedFeePlanId);
       }
     } else {
-      this.studentService.add(studentData);
-      // Get the newly created student's ID
-      const allStudents = this.studentService.getAll();
-      const newStudent = allStudents[allStudents.length - 1];
-      if (newStudent && this.selectedFeePlanId) {
-        this.studentService.assignFeePlan(newStudent.id!, this.selectedFeePlanId);
+      await this.studentService.add(studentData);
+      if (this.selectedFeePlanId) {
+        const allStudents = await this.studentService.getAll();
+        const newStudent = allStudents[allStudents.length - 1];
+        if (newStudent) {
+          await this.studentService.assignFeePlan(newStudent.id!, this.selectedFeePlanId);
+        }
       }
     }
 

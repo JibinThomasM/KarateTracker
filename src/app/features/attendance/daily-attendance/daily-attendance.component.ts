@@ -47,15 +47,15 @@ export class DailyAttendanceComponent implements OnInit, OnDestroy {
     this.dojoSub.unsubscribe();
   }
 
-  loadAttendance() {
+  async loadAttendance() {
     this.isSaved = false;
-    const activeStudents = this.studentService.getActive();
-    const existingRecords = this.attendanceService.getByDate(this.selectedDate);
+    const activeStudents = await this.studentService.getActive();
+    const existingRecords = await this.attendanceService.getByDate(this.selectedDate);
     this.hasExisting = existingRecords.length > 0;
 
-    const existingMap = new Map<number, string>();
+    const existingMap = new Map<string, string>();
     for (const rec of existingRecords) {
-      existingMap.set(rec.student_id, rec.status);
+      existingMap.set(rec.studentId, rec.status);
     }
 
     this.entries = activeStudents.map(student => ({
@@ -97,13 +97,15 @@ export class DailyAttendanceComponent implements OnInit, OnDestroy {
     this.isSaved = false;
   }
 
-  saveAttendance() {
+  async saveAttendance() {
     const records = this.entries.map(e => ({
-      student_id: e.student.id!,
+      studentId: e.student.id!,
       date: this.selectedDate,
-      status: e.status
+      status: e.status,
+      studentName: e.student.name,
+      beltRank: e.student.beltRank
     }));
-    this.attendanceService.bulkMarkAttendance(records);
+    await this.attendanceService.bulkMarkAttendance(records);
     this.isSaved = true;
     this.hasExisting = true;
   }

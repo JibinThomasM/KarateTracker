@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SettingsService } from '../../core/services/settings.service';
 import { PaymentService } from '../../core/services/payment.service';
-import { AuthService } from '../../core/services/auth.service';
 import { DojoService } from '../../core/services/dojo.service';
 import { FeePlan } from '../../core/models/payment.model';
 import { Dojo } from '../../core/models/dojo.model';
@@ -20,9 +19,6 @@ export class SettingsComponent implements OnInit {
   feePlans: FeePlan[] = [];
   newPlanName = '';
   newPlanAmount: number | null = null;
-  newPassword = '';
-  confirmNewPassword = '';
-  passwordMessage = '';
   savedButton = '';
 
   // Dojo management
@@ -35,7 +31,6 @@ export class SettingsComponent implements OnInit {
   constructor(
     private settingsService: SettingsService,
     private paymentService: PaymentService,
-    private authService: AuthService,
     private dojoService: DojoService,
     private dialog: MatDialog
   ) {}
@@ -44,12 +39,13 @@ export class SettingsComponent implements OnInit {
     this.loadSettings();
   }
 
-  loadSettings() {
+  async loadSettings() {
+    await this.settingsService.loadSettings();
     this.currency = this.settingsService.get('currency') || '₹';
     this.defaultDueDay = this.settingsService.get('default_due_day') || '5';
     this.whatsappTemplate = this.settingsService.get('whatsapp_template') || '';
-    this.feePlans = this.paymentService.getFeePlans();
-    this.dojos = this.dojoService.getAll();
+    this.feePlans = await this.paymentService.getFeePlans();
+    this.dojos = await this.dojoService.getAll();
   }
 
   private showSaved(key: string) {
@@ -57,32 +53,32 @@ export class SettingsComponent implements OnInit {
     setTimeout(() => this.savedButton = '', 2000);
   }
 
-  saveSettings() {
-    this.settingsService.set('currency', this.currency);
-    this.settingsService.set('default_due_day', this.defaultDueDay);
-    this.settingsService.set('whatsapp_template', this.whatsappTemplate);
+  async saveSettings() {
+    await this.settingsService.set('currency', this.currency);
+    await this.settingsService.set('default_due_day', this.defaultDueDay);
+    await this.settingsService.set('whatsapp_template', this.whatsappTemplate);
   }
 
-  saveGeneral() {
-    this.saveSettings();
+  async saveGeneral() {
+    await this.saveSettings();
     this.showSaved('general');
   }
 
-  saveWhatsApp() {
-    this.saveSettings();
+  async saveWhatsApp() {
+    await this.saveSettings();
     this.showSaved('whatsapp');
   }
 
-  addFeePlan() {
+  async addFeePlan() {
     if (!this.newPlanName || !this.newPlanAmount) return;
-    this.paymentService.addFeePlan({ name: this.newPlanName, monthly_amount: this.newPlanAmount, dojo_id: 0 });
+    await this.paymentService.addFeePlan({ name: this.newPlanName, monthlyAmount: this.newPlanAmount, dojoId: this.dojoService.getSelectedDojoId() });
     this.newPlanName = '';
     this.newPlanAmount = null;
-    this.feePlans = this.paymentService.getFeePlans();
+    this.feePlans = await this.paymentService.getFeePlans();
     this.showSaved('feePlan');
   }
 
-  deleteFeePlan(id: number) {
+  deleteFeePlan(id: string) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: '340px',
       data: {
@@ -92,27 +88,27 @@ export class SettingsComponent implements OnInit {
         cancelText: 'Cancel'
       }
     });
-    dialogRef.afterClosed().subscribe(confirmed => {
+    dialogRef.afterClosed().subscribe(async confirmed => {
       if (confirmed) {
-        this.paymentService.deleteFeePlan(id);
-        this.feePlans = this.paymentService.getFeePlans();
+        await this.paymentService.deleteFeePlan(id);
+        this.feePlans = await this.paymentService.getFeePlans();
       }
     });
   }
 
   // Dojo CRUD
-  addDojo() {
+  async addDojo() {
     if (!this.newDojoName.trim()) return;
-    this.dojoService.add({
+    await this.dojoService.add({
       name: this.newDojoName.trim(),
       location: this.newDojoLocation.trim(),
       phone: this.newDojoPhone.trim(),
-      is_active: 1
+      isActive: true
     });
     this.newDojoName = '';
     this.newDojoLocation = '';
     this.newDojoPhone = '';
-    this.dojos = this.dojoService.getAll();
+    this.dojos = await this.dojoService.getAll();
     this.showSaved('addDojo');
   }
 
@@ -120,11 +116,11 @@ export class SettingsComponent implements OnInit {
     this.editingDojo = { ...dojo };
   }
 
-  saveEditDojo() {
+  async saveEditDojo() {
     if (!this.editingDojo || !this.editingDojo.name.trim()) return;
-    this.dojoService.update(this.editingDojo);
+    await this.dojoService.update(this.editingDojo);
     this.editingDojo = null;
-    this.dojos = this.dojoService.getAll();
+    this.dojos = await this.dojoService.getAll();
     this.showSaved('editDojo');
   }
 
@@ -132,9 +128,9 @@ export class SettingsComponent implements OnInit {
     this.editingDojo = null;
   }
 
-  toggleDojoActive(dojo: Dojo) {
-    this.dojoService.toggleActive(dojo.id!, dojo.is_active ? false : true);
-    this.dojos = this.dojoService.getAll();
+  async toggleDojoActive(dojo: Dojo) {
+    await this.dojoService.toggleActive(dojo.id!, !dojo.isActive);
+    this.dojos = await this.dojoService.getAll();
   }
 
   deleteDojo(dojo: Dojo) {
@@ -147,28 +143,11 @@ export class SettingsComponent implements OnInit {
         cancelText: 'Cancel'
       }
     });
-    dialogRef.afterClosed().subscribe(confirmed => {
+    dialogRef.afterClosed().subscribe(async confirmed => {
       if (confirmed) {
-        this.dojoService.delete(dojo.id!);
-        this.dojos = this.dojoService.getAllIncludingInactive();
+        await this.dojoService.delete(dojo.id!);
+        this.dojos = await this.dojoService.getAllIncludingInactive();
       }
     });
-  }
-
-  async changePassword() {
-    this.passwordMessage = '';
-    if (this.newPassword.length < 4) {
-      this.passwordMessage = 'Password must be at least 4 characters';
-      return;
-    }
-    if (this.newPassword !== this.confirmNewPassword) {
-      this.passwordMessage = 'Passwords do not match';
-      return;
-    }
-    await this.authService.setPassword(this.newPassword);
-    this.newPassword = '';
-    this.confirmNewPassword = '';
-    this.passwordMessage = 'Password changed successfully!';
-    this.showSaved('password');
   }
 }

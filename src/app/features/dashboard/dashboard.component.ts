@@ -41,18 +41,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.dojoSub.unsubscribe();
   }
 
-  loadData() {
-    const selectedDojo = this.dojoService.getById(this.dojoService.getSelectedDojoId());
+  async loadData() {
+    await this.settingsService.loadSettings();
+    const selectedDojo = await this.dojoService.getById(this.dojoService.getSelectedDojoId());
     this.dojoName = selectedDojo?.name || this.settingsService.get('dojo_name') || 'My Karate Class';
     this.currency = this.settingsService.get('currency') || '₹';
-    this.activeStudents = this.studentService.getCount();
-    this.attendanceToday = this.attendanceService.getTodayStats();
-    this.paymentService.updateOverdueStatuses();
-    this.overdueCount = this.paymentService.getOverdueCount();
-    this.overdueAmount = this.paymentService.getOverdueTotalAmount();
+    this.activeStudents = await this.studentService.getCount();
+    this.attendanceToday = await this.attendanceService.getTodayStats();
+    await this.paymentService.updateOverdueStatuses();
+    this.overdueCount = await this.paymentService.getOverdueCount();
+    this.overdueAmount = await this.paymentService.getOverdueTotalAmount();
     const now = new Date();
     const monthYear = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-    this.monthlyCollection = this.paymentService.getMonthlyCollection(monthYear);
+    this.monthlyCollection = await this.paymentService.getMonthlyCollection(monthYear);
   }
 
   goToAttendance() {

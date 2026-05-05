@@ -23,22 +23,22 @@
   <!-- Mobile: Card list -->
   <div *ngIf="isMobile" class="student-cards">
     <mat-card *ngFor="let student of filteredStudents" class="student-card"
-              [class.inactive]="!student.is_active" (click)="editStudent(student)">
+              [class.inactive]="!student.isActive" (click)="editStudent(student)">
       <mat-card-content>
         <div class="card-row">
           <div class="student-info">
             <span class="student-name">{{ student.name }}</span>
             <span class="student-phone">{{ student.phone }}</span>
           </div>
-          <span class="belt-badge" [style.background]="getBeltColor(student.belt_rank)"
-                [style.color]="getBeltTextColor(student.belt_rank)">
-            {{ student.belt_rank }}
+          <span class="belt-badge" [style.background]="getBeltColor(student.beltRank)"
+                [style.color]="getBeltTextColor(student.beltRank)">
+            {{ student.beltRank }}
           </span>
         </div>
         <div class="card-actions">
           <button mat-icon-button (click)="toggleActive(student); $event.stopPropagation()"
-                  [matTooltip]="student.is_active ? 'Deactivate' : 'Activate'">
-            <mat-icon>{{ student.is_active ? 'person_off' : 'person' }}</mat-icon>
+                  [matTooltip]="student.isActive ? 'Deactivate' : 'Activate'">
+            <mat-icon>{{ student.isActive ? 'person_off' : 'person' }}</mat-icon>
           </button>
         </div>
       </mat-card-content>
@@ -56,12 +56,12 @@
         <td mat-cell *matCellDef="let s">{{ s.name }}</td>
       </ng-container>
 
-      <ng-container matColumnDef="belt_rank">
+      <ng-container matColumnDef="beltRank">
         <th mat-header-cell *matHeaderCellDef>Belt</th>
         <td mat-cell *matCellDef="let s">
-          <span class="belt-badge" [style.background]="getBeltColor(s.belt_rank)"
-                [style.color]="getBeltTextColor(s.belt_rank)">
-            {{ s.belt_rank }}
+          <span class="belt-badge" [style.background]="getBeltColor(s.beltRank)"
+                [style.color]="getBeltTextColor(s.beltRank)">
+            {{ s.beltRank }}
           </span>
         </td>
       </ng-container>
@@ -74,8 +74,8 @@
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef>Status</th>
         <td mat-cell *matCellDef="let s">
-          <span [class.active-status]="s.is_active" [class.inactive-status]="!s.is_active">
-            {{ s.is_active ? 'Active' : 'Inactive' }}
+          <span [class.active-status]="s.isActive" [class.inactive-status]="!s.isActive">
+            {{ s.isActive ? 'Active' : 'Inactive' }}
           </span>
         </td>
       </ng-container>
@@ -87,15 +87,15 @@
             <mat-icon>edit</mat-icon>
           </button>
           <button mat-icon-button (click)="toggleActive(s)"
-                  [matTooltip]="s.is_active ? 'Deactivate' : 'Activate'">
-            <mat-icon>{{ s.is_active ? 'person_off' : 'person' }}</mat-icon>
+                  [matTooltip]="s.isActive ? 'Deactivate' : 'Activate'">
+            <mat-icon>{{ s.isActive ? 'person_off' : 'person' }}</mat-icon>
           </button>
         </td>
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-          [class.inactive]="!row.is_active"></tr>
+          [class.inactive]="!row.isActive"></tr>
     </table>
     <p *ngIf="filteredStudents.length === 0" class="empty-state">
       No students found. Click + to add one.

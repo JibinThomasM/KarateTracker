@@ -21,7 +21,7 @@ export class PaymentListComponent implements OnInit, OnDestroy {
   statusFilter = '';
   isMobile = false;
   currency = '₹';
-  displayedColumns = ['student_name', 'amount_due', 'amount_paid', 'due_date', 'status', 'actions'];
+  displayedColumns = ['studentName', 'amountDue', 'amountPaid', 'dueDate', 'status', 'actions'];
   private dojoSub!: Subscription;
 
   constructor(
@@ -59,12 +59,14 @@ export class PaymentListComponent implements OnInit, OnDestroy {
     this.dojoSub.unsubscribe();
   }
 
-  loadPayments() {
-    this.paymentService.updateOverdueStatuses();
+  async loadPayments() {
+    await this.settingsService.loadSettings();
+    this.currency = this.settingsService.get('currency') || '₹';
+    await this.paymentService.updateOverdueStatuses();
     if (this.statusFilter === 'overdue') {
-      this.payments = this.paymentService.getOverduePayments();
+      this.payments = await this.paymentService.getOverduePayments();
     } else {
-      this.payments = this.paymentService.getPayments(
+      this.payments = await this.paymentService.getPayments(
         this.selectedMonth || undefined,
         this.statusFilter || undefined
       );
@@ -89,13 +91,13 @@ export class PaymentListComponent implements OnInit, OnDestroy {
     this.loadPayments();
   }
 
-  markPaid(payment: PaymentRecord) {
-    this.paymentService.markPaid(payment.id!, payment.amount_due);
-    this.loadPayments();
+  async markPaid(payment: PaymentRecord) {
+    await this.paymentService.markPaid(payment.id!, payment.amountDue);
+    await this.loadPayments();
   }
 
   sendWhatsappReminder(payment: PaymentRecord) {
-    const whatsappNum = payment.whatsapp_number || '';
+    const whatsappNum = payment.whatsappNumber || '';
     if (!whatsappNum) {
       this.dialog.open(AlertDialogComponent, {
         width: '340px',
@@ -108,35 +110,47 @@ export class PaymentListComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    const overdueAmount = payment.amount_due - payment.amount_paid;
+    const overdueAmount = payment.amountDue - payment.amountPaid;
     const url = this.whatsappService.buildReminderUrl(
-      whatsappNum, payment.student_name, overdueAmount, payment.month_year
+      whatsappNum, payment.studentName, overdueAmount, payment.monthYear
     );
     window.open(url, '_blank');
   }
 
-  generateFees() {
+  async generateFees() {
     if (!this.selectedMonth) return;
-    const count = this.paymentService.generateMonthlyFees(this.selectedMonth);
-    this.loadPayments();
-    if (count > 0) {
+    try {
+      const count = await this.paymentService.generateMonthlyFees(this.selectedMonth);
+      await this.loadPayments();
+      if (count > 0) {
+        this.dialog.open(AlertDialogComponent, {
+          width: '340px',
+          data: {
+            title: 'Fees Generated',
+            message: `Generated ${count} payment records for ${this.formatMonth(this.selectedMonth)}.`,
+            icon: 'check_circle',
+            color: 'primary'
+          }
+        });
+      } else {
+        this.dialog.open(AlertDialogComponent, {
+          width: '340px',
+          data: {
+            title: 'No Records Generated',
+            message: 'No students have fee plans assigned. Edit each student and select a fee plan first.',
+            icon: 'info',
+            color: 'primary'
+          }
+        });
+      }
+    } catch (e: any) {
       this.dialog.open(AlertDialogComponent, {
         width: '340px',
         data: {
-          title: 'Fees Generated',
-          message: `Generated ${count} payment records for ${this.formatMonth(this.selectedMonth)}.`,
-          icon: 'check_circle',
-          color: 'primary'
-        }
-      });
-    } else {
-      this.dialog.open(AlertDialogComponent, {
-        width: '340px',
-        data: {
-          title: 'No Records Generated',
-          message: 'All active students already have entries for this month.',
-          icon: 'info',
-          color: 'primary'
+          title: 'Error',
+          message: e.message || 'Failed to generate fees.',
+          icon: 'error',
+          color: 'warn'
         }
       });
     }

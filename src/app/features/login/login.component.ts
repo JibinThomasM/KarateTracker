@@ -9,6 +9,7 @@ import { GoogleDriveService } from '../../core/services/google-drive.service';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit {
+  email = '';
   password = '';
   confirmPassword = '';
   isFirstTime = false;
@@ -22,7 +23,7 @@ export class LoginComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    this.isFirstTime = !(await this.authService.isPasswordSet());
+    this.isFirstTime = !(await this.authService.hasAccount());
   }
 
   async onSubmit() {
@@ -31,8 +32,13 @@ export class LoginComponent implements OnInit {
 
     try {
       if (this.isFirstTime) {
-        if (this.password.length < 4) {
-          this.error = 'Password must be at least 4 characters';
+        if (!this.email || !this.email.includes('@')) {
+          this.error = 'Please enter a valid email';
+          this.loading = false;
+          return;
+        }
+        if (this.password.length < 6) {
+          this.error = 'Password must be at least 6 characters';
           this.loading = false;
           return;
         }
@@ -41,21 +47,26 @@ export class LoginComponent implements OnInit {
           this.loading = false;
           return;
         }
-        await this.authService.setPassword(this.password);
-        await this.authService.login(this.password);
+        await this.authService.register(this.email, this.password);
+        this.authService.markRegistered();
         this.router.navigate(['/dashboard']);
         this.triggerAutoBackup();
       } else {
-        const success = await this.authService.login(this.password);
+        if (!this.email || !this.password) {
+          this.error = 'Please enter email and password';
+          this.loading = false;
+          return;
+        }
+        const success = await this.authService.login(this.email, this.password);
         if (success) {
           this.router.navigate(['/dashboard']);
           this.triggerAutoBackup();
         } else {
-          this.error = 'Incorrect password';
+          this.error = 'Incorrect email or password';
         }
       }
-    } catch (e) {
-      this.error = 'An error occurred. Please try again.';
+    } catch (e: any) {
+      this.error = e.message || 'An error occurred. Please try again.';
     }
     this.loading = false;
   }

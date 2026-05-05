@@ -1,98 +1,131 @@
 import { Injectable } from '@angular/core';
-import { DatabaseService } from './database.service';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { firstValueFrom } from 'rxjs';
 import { DojoService } from './dojo.service';
+import { StudentService } from './student.service';
 import { Attendance, AttendanceRecord } from '../models/attendance.model';
 
 @Injectable({ providedIn: 'root' })
 export class AttendanceService {
-  constructor(private dbService: DatabaseService, private dojoService: DojoService) {}
+  constructor(
+    private afs: AngularFirestore,
+    private dojoService: DojoService,
+    private studentService: StudentService
+  ) {}
 
-  private get dojoId(): number {
+  private get dojoId(): string {
     return this.dojoService.getSelectedDojoId();
   }
 
-  getByDate(date: string): AttendanceRecord[] {
-    return this.dbService.query<AttendanceRecord>(
-      `SELECT a.id, a.student_id, s.name as student_name, s.belt_rank, a.date, a.status
-       FROM attendance a
-       JOIN students s ON s.id = a.student_id
-       WHERE a.date = ? AND s.dojo_id = ?
-       ORDER BY s.name`,
-      [date, this.dojoId]
+  async getByDate(date: string): Promise<AttendanceRecord[]> {
+    const snapshot = await firstValueFrom(
+      this.afs.collection<Attendance>('attendance', ref =>
+        ref.where('dojoId', '==', this.dojoId).where('date', '==', date)
+      ).get()
     );
+    return snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as AttendanceRecord))
+      .sort((a, b) => a.studentName.localeCompare(b.studentName));
   }
 
-  getByStudent(studentId: number): Attendance[] {
-    return this.dbService.query<Attendance>(
-      'SELECT * FROM attendance WHERE student_id = ? ORDER BY date DESC',
-      [studentId]
+  async getByStudent(studentId: string): Promise<Attendance[]> {
+    const snapshot = await firstValueFrom(
+      this.afs.collection<Attendance>('attendance', ref =>
+        ref.where('studentId', '==', studentId)
+      ).get()
     );
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => b.date.localeCompare(a.date));
   }
 
-  markAttendance(studentId: number, date: string, status: 'present' | 'absent'): void {
-    this.dbService.run(
-      `INSERT OR REPLACE INTO attendance (student_id, date, status) VALUES (?, ?, ?)`,
-      [studentId, date, status]
-    );
+  async markAttendance(studentId: string, date: string, status: 'present' | 'absent', studentName: string, beltRank: string): Promise<void> {
+    const docId = `${studentId}_${date}`;
+    await this.afs.doc(`attendance/${docId}`).set({
+      studentId,
+      dojoId: this.dojoId,
+      studentName,
+      beltRank,
+      date,
+      status
+    });
   }
 
-  bulkMarkAttendance(records: { student_id: number; date: string; status: string }[]): void {
+  async bulkMarkAttendance(records: { studentId: string; date: string; status: string; studentName: string; beltRank: string }[]): Promise<void> {
+    const batch = this.afs.firestore.batch();
     for (const record of records) {
-      this.dbService.run(
-        `INSERT OR REPLACE INTO attendance (student_id, date, status) VALUES (?, ?, ?)`,
-        [record.student_id, record.date, record.status]
-      );
+      const docId = `${record.studentId}_${record.date}`;
+      const ref = this.afs.doc(`attendance/${docId}`).ref;
+      batch.set(ref, {
+        studentId: record.studentId,
+        dojoId: this.dojoId,
+        studentName: record.studentName,
+        beltRank: record.beltRank,
+        date: record.date,
+        status: record.status
+      });
     }
+    await batch.commit();
   }
 
-  getTodayStats(): { present: number; total: number; taken: boolean } {
+  async getTodayStats(): Promise<{ present: number; total: number; taken: boolean }> {
     const today = new Date().toISOString().split('T')[0];
-    const records = this.getByDate(today);
+    const records = await this.getByDate(today);
     const present = records.filter(r => r.status === 'present').length;
     return { present, total: records.length, taken: records.length > 0 };
   }
 
-  getStudentStats(studentId: number): { total: number; present: number; percentage: number } {
-    const all = this.dbService.query<{ count: number }>(
-      'SELECT COUNT(*) as count FROM attendance WHERE student_id = ?', [studentId]
-    );
-    const presentResult = this.dbService.query<{ count: number }>(
-      "SELECT COUNT(*) as count FROM attendance WHERE student_id = ? AND status = 'present'", [studentId]
-    );
-    const total = all[0]?.count || 0;
-    const present = presentResult[0]?.count || 0;
+  async getStudentStats(studentId: string): Promise<{ total: number; present: number; percentage: number }> {
+    const records = await this.getByStudent(studentId);
+    const total = records.length;
+    const present = records.filter(r => r.status === 'present').length;
     return { total, present, percentage: total > 0 ? Math.round((present / total) * 100) : 0 };
   }
 
-  isAttendanceTaken(date: string): boolean {
-    const result = this.dbService.query<{ count: number }>(
-      `SELECT COUNT(*) as count FROM attendance a
-       JOIN students s ON s.id = a.student_id
-       WHERE a.date = ? AND s.dojo_id = ?`,
-      [date, this.dojoId]
-    );
-    return (result[0]?.count || 0) > 0;
+  async isAttendanceTaken(date: string): Promise<boolean> {
+    const records = await this.getByDate(date);
+    return records.length > 0;
   }
 
-  getMonthlyReport(monthYear: string): { student_id: number; student_name: string; belt_rank: string; present: number; absent: number; total: number; percentage: number }[] {
+  async getMonthlyReport(monthYear: string): Promise<{ studentId: string; studentName: string; beltRank: string; present: number; absent: number; total: number; percentage: number }[]> {
     const [year, month] = monthYear.split('-');
     const startDate = `${year}-${month}-01`;
     const endDate = `${year}-${month}-31`;
 
-    return this.dbService.query(
-      `SELECT s.id as student_id, s.name as student_name, s.belt_rank,
-              SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present,
-              SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent,
-              COUNT(a.id) as total,
-              CASE WHEN COUNT(a.id) > 0
-                THEN ROUND(SUM(CASE WHEN a.status = 'present' THEN 1.0 ELSE 0 END) / COUNT(a.id) * 100)
-                ELSE 0 END as percentage
-       FROM students s
-       LEFT JOIN attendance a ON a.student_id = s.id AND a.date >= ? AND a.date <= ?
-       WHERE s.dojo_id = ? AND s.is_active = 1
-       GROUP BY s.id
-       ORDER BY s.name`,
-      [startDate, endDate, this.dojoId]
+    // Get all attendance records for this dojo, filter by date client-side
+    const snapshot = await firstValueFrom(
+      this.afs.collection<Attendance>('attendance', ref =>
+        ref.where('dojoId', '==', this.dojoId)
+      ).get()
     );
+
+    const monthRecords = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(r => r.date >= startDate && r.date <= endDate);
+
+    // Get active students for this dojo
+    const students = await this.studentService.getActive();
+
+    // Build report per student
+    const attendanceMap = new Map<string, Attendance[]>();
+    monthRecords.forEach(data => {
+      const list = attendanceMap.get(data.studentId) || [];
+      list.push(data);
+      attendanceMap.set(data.studentId, list);
+    });
+
+    return students.map(s => {
+      const records = attendanceMap.get(s.id!) || [];
+      const present = records.filter(r => r.status === 'present').length;
+      const absent = records.filter(r => r.status === 'absent').length;
+      const total = records.length;
+      return {
+        studentId: s.id!,
+        studentName: s.name,
+        beltRank: s.beltRank,
+        present,
+        absent,
+        total,
+        percentage: total > 0 ? Math.round((present / total) * 100) : 0
+      };
+    }).sort((a, b) => a.studentName.localeCompare(b.studentName));
   }
 }

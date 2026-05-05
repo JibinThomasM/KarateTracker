@@ -10,7 +10,7 @@ import { DojoService } from '../../../core/services/dojo.service';
 })
 export class MonthlyReportComponent implements OnInit, OnDestroy {
   selectedMonth: string;
-  report: { student_name: string; belt_rank: string; present: number; absent: number; total: number; percentage: number }[] = [];
+  report: { studentName: string; beltRank: string; present: number; absent: number; total: number; percentage: number }[] = [];
   totalPresent = 0;
   totalAbsent = 0;
   totalClasses = 0;
@@ -34,8 +34,8 @@ export class MonthlyReportComponent implements OnInit, OnDestroy {
     this.dojoSub.unsubscribe();
   }
 
-  loadReport() {
-    this.report = this.attendanceService.getMonthlyReport(this.selectedMonth);
+  async loadReport() {
+    this.report = await this.attendanceService.getMonthlyReport(this.selectedMonth);
     this.totalPresent = this.report.reduce((sum, r) => sum + r.present, 0);
     this.totalAbsent = this.report.reduce((sum, r) => sum + r.absent, 0);
     this.totalClasses = this.report.length > 0 ? this.report[0].total : 0;

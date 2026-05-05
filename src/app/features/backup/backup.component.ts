@@ -34,14 +34,14 @@ export class BackupComponent implements OnInit {
     }
   }
 
-  exportDatabase() {
-    const data = this.dbService.exportDatabase();
-    const blob = new Blob([data], { type: 'application/octet-stream' });
+  async exportDatabase() {
+    const data = await this.dbService.exportDatabase();
+    const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     const date = new Date().toISOString().split('T')[0];
-    a.download = `karate-tracker-backup-${date}.db`;
+    a.download = `karate-tracker-backup-${date}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -51,8 +51,8 @@ export class BackupComponent implements OnInit {
     if (!input.files || input.files.length === 0) return;
 
     const file = input.files[0];
-    if (!file.name.endsWith('.db')) {
-      this.importMessage = 'Please select a valid .db file';
+    if (!file.name.endsWith('.json') && !file.name.endsWith('.db')) {
+      this.importMessage = 'Please select a valid .json backup file';
       this.importError = true;
       return;
     }

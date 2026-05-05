@@ -1,12 +1,13 @@
 export interface Student {
-  id?: number;
-  dojo_id: number;
+  id?: string;
+  dojoId: string;
   name: string;
-  belt_rank: string;
+  beltRank: string;
   phone: string;
-  whatsapp_number: string;
-  join_date: string;
-  is_active: number; // 1 = active, 0 = inactive
+  whatsappNumber: string;
+  joinDate: string;
+  isActive: boolean;
+  feePlanId?: string;
 }
 
 export const BELT_RANKS = [

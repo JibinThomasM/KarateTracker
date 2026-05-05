@@ -48,7 +48,7 @@
          [class.status-absent]="entry.status === 'absent'">
       <div class="item-info">
         <span class="item-name">{{ entry.student.name }}</span>
-        <span class="item-belt">{{ entry.student.belt_rank }}</span>
+        <span class="item-belt">{{ entry.student.beltRank }}</span>
       </div>
       <div class="status-toggle">
         <mat-icon *ngIf="entry.status === 'present'" class="status-icon present">check_circle</mat-icon>

@@ -1,15 +1,18 @@
 export interface Attendance {
-  id?: number;
-  student_id: number;
+  id?: string;
+  studentId: string;
+  dojoId: string;
   date: string; // YYYY-MM-DD
   status: 'present' | 'absent';
+  studentName: string;
+  beltRank: string;
 }
 
 export interface AttendanceRecord {
-  id?: number;
-  student_id: number;
-  student_name: string;
-  belt_rank: string;
+  id?: string;
+  studentId: string;
+  studentName: string;
+  beltRank: string;
   date: string;
   status: 'present' | 'absent';
 }
