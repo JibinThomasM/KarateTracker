@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  allowedEmails: ['jibinthomas799@gmail.com','rajukollam2012@gmail.com'] as string[],
   firebase: {
     apiKey: 'AIzaSyCwIPU-tgwCQAG_ulPOHKduSnuCNJu5JnU',
     authDomain: 'karatetracker-ijmaa.firebaseapp.com',

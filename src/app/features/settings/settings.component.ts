@@ -3,6 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { SettingsService } from '../../core/services/settings.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { DojoService } from '../../core/services/dojo.service';
+import { AuthService } from '../../core/services/auth.service';
 import { FeePlan } from '../../core/models/payment.model';
 import { Dojo } from '../../core/models/dojo.model';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
@@ -28,10 +29,19 @@ export class SettingsComponent implements OnInit {
   newDojoPhone = '';
   editingDojo: Dojo | null = null;
 
+  // Change password
+  currentPassword = '';
+  newPassword = '';
+  confirmNewPassword = '';
+  passwordError = '';
+  passwordSuccess = '';
+  changingPassword = false;
+
   constructor(
     private settingsService: SettingsService,
     private paymentService: PaymentService,
     private dojoService: DojoService,
+    private authService: AuthService,
     private dialog: MatDialog
   ) {}
 
@@ -149,5 +159,39 @@ export class SettingsComponent implements OnInit {
         this.dojos = await this.dojoService.getAllIncludingInactive();
       }
     });
+  }
+
+  async changePassword() {
+    this.passwordError = '';
+    this.passwordSuccess = '';
+
+    if (!this.currentPassword || !this.newPassword) {
+      this.passwordError = 'Please fill in all fields';
+      return;
+    }
+    if (this.newPassword.length < 6) {
+      this.passwordError = 'New password must be at least 6 characters';
+      return;
+    }
+    if (this.newPassword !== this.confirmNewPassword) {
+      this.passwordError = 'New passwords do not match';
+      return;
+    }
+
+    this.changingPassword = true;
+    try {
+      await this.authService.changePassword(this.currentPassword, this.newPassword);
+      this.passwordSuccess = 'Password changed successfully';
+      this.currentPassword = '';
+      this.newPassword = '';
+      this.confirmNewPassword = '';
+    } catch (e: any) {
+      if (e.code === 'auth/wrong-password') {
+        this.passwordError = 'Current password is incorrect';
+      } else {
+        this.passwordError = e.message || 'Failed to change password';
+      }
+    }
+    this.changingPassword = false;
   }
 }

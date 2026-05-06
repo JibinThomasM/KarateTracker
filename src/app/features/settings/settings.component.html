@@ -152,4 +152,43 @@
     </mat-card-content>
   </mat-card>
 
+  <!-- Change Password -->
+  <mat-card class="section-card">
+    <mat-card-header>
+      <mat-card-title>Change Password</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Current Password</mat-label>
+        <input matInput type="password" [(ngModel)]="currentPassword">
+        <mat-icon matSuffix>lock</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>New Password</mat-label>
+        <input matInput type="password" [(ngModel)]="newPassword">
+        <mat-icon matSuffix>lock_outline</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Confirm New Password</mat-label>
+        <input matInput type="password" [(ngModel)]="confirmNewPassword">
+        <mat-icon matSuffix>lock_outline</mat-icon>
+      </mat-form-field>
+
+      <div *ngIf="passwordError" class="error-text">
+        <mat-icon>error</mat-icon> {{ passwordError }}
+      </div>
+      <div *ngIf="passwordSuccess" class="success-text">
+        <mat-icon>check_circle</mat-icon> {{ passwordSuccess }}
+      </div>
+
+      <button mat-raised-button color="primary" (click)="changePassword()"
+              [disabled]="changingPassword || !currentPassword || !newPassword || !confirmNewPassword">
+        <mat-spinner *ngIf="changingPassword" diameter="20"></mat-spinner>
+        <span *ngIf="!changingPassword">Change Password</span>
+      </button>
+    </mat-card-content>
+  </mat-card>
+
 </div>

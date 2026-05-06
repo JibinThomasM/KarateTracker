@@ -40,6 +40,20 @@ export class AuthService {
     await this.afAuth.signOut();
   }
 
+  async sendPasswordResetEmail(email: string): Promise<void> {
+    await this.afAuth.sendPasswordResetEmail(email);
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.afAuth.currentUser;
+    if (!user || !user.email) throw new Error('No user logged in');
+    // Re-authenticate before changing password
+    const firebase = await import('firebase/compat/app');
+    const credential = firebase.default.auth.EmailAuthProvider.credential(user.email, currentPassword);
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
   /** Check if any user account exists by trying to fetch sign-in methods */
   async hasAccount(): Promise<boolean> {
     // We store a flag in localStorage after first registration

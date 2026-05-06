@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { GoogleDriveService } from '../../core/services/google-drive.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -11,19 +11,27 @@ import { GoogleDriveService } from '../../core/services/google-drive.service';
 export class LoginComponent implements OnInit {
   email = '';
   password = '';
-  confirmPassword = '';
-  isFirstTime = false;
   error = '';
   loading = false;
+  resetMessage = '';
 
   constructor(
     private authService: AuthService,
-    private router: Router,
-    private driveService: GoogleDriveService
+    private router: Router
   ) {}
 
   async ngOnInit() {
-    this.isFirstTime = !(await this.authService.hasAccount());
+    // Check if already logged in
+    const loggedIn = await this.authService.isLoggedIn$().toPromise();
+    if (loggedIn) {
+      this.router.navigate(['/dashboard']);
+    }
+  }
+
+  private isEmailAllowed(email: string): boolean {
+    const allowed = environment.allowedEmails;
+    if (!allowed || allowed.length === 0) return true; // No restriction if list is empty
+    return allowed.map(e => e.toLowerCase()).includes(email.toLowerCase());
   }
 
   async onSubmit() {
@@ -31,39 +39,29 @@ export class LoginComponent implements OnInit {
     this.loading = true;
 
     try {
-      if (this.isFirstTime) {
-        if (!this.email || !this.email.includes('@')) {
-          this.error = 'Please enter a valid email';
-          this.loading = false;
-          return;
-        }
-        if (this.password.length < 6) {
-          this.error = 'Password must be at least 6 characters';
-          this.loading = false;
-          return;
-        }
-        if (this.password !== this.confirmPassword) {
-          this.error = 'Passwords do not match';
-          this.loading = false;
-          return;
-        }
-        await this.authService.register(this.email, this.password);
-        this.authService.markRegistered();
+      if (!this.email || !this.email.includes('@')) {
+        this.error = 'Please enter a valid email';
+        this.loading = false;
+        return;
+      }
+      if (!this.password) {
+        this.error = 'Please enter a password';
+        this.loading = false;
+        return;
+      }
+
+      // Check against allowed emails list
+      if (!this.isEmailAllowed(this.email)) {
+        this.error = 'Access denied. Your email is not authorized to use this app.';
+        this.loading = false;
+        return;
+      }
+
+      const success = await this.authService.login(this.email, this.password);
+      if (success) {
         this.router.navigate(['/dashboard']);
-        this.triggerAutoBackup();
       } else {
-        if (!this.email || !this.password) {
-          this.error = 'Please enter email and password';
-          this.loading = false;
-          return;
-        }
-        const success = await this.authService.login(this.email, this.password);
-        if (success) {
-          this.router.navigate(['/dashboard']);
-          this.triggerAutoBackup();
-        } else {
-          this.error = 'Incorrect email or password';
-        }
+        this.error = 'Incorrect email or password';
       }
     } catch (e: any) {
       this.error = e.message || 'An error occurred. Please try again.';
@@ -71,14 +69,20 @@ export class LoginComponent implements OnInit {
     this.loading = false;
   }
 
-  /** Silent auto-backup to Google Drive on first login of the day */
-  private triggerAutoBackup(): void {
-    if (this.driveService.needsBackupToday()) {
-      this.driveService.backup().then(result => {
-        if (!result.success) {
-          console.warn('Auto-backup failed:', result.error);
-        }
-      });
+  async forgotPassword() {
+    if (!this.email || !this.email.includes('@')) {
+      this.error = 'Please enter your email address first';
+      return;
     }
+    this.loading = true;
+    this.error = '';
+    this.resetMessage = '';
+    try {
+      await this.authService.sendPasswordResetEmail(this.email);
+      this.resetMessage = 'Password reset email sent. Check your inbox.';
+    } catch (e: any) {
+      this.error = e.message || 'Failed to send reset email';
+    }
+    this.loading = false;
   }
 }

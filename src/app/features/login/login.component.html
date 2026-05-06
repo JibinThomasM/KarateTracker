@@ -3,8 +3,7 @@
     <div class="logo-section">
       <img src="assets/logo.jpeg" alt="Indo-Japan Martial Arts Academy" class="logo-img">
       <h1>Indo-Japan Martial Arts Academy</h1>
-      <p *ngIf="isFirstTime">Welcome! Create your admin account to get started.</p>
-      <p *ngIf="!isFirstTime">Sign in to continue.</p>
+      <p>Sign in to continue.</p>
     </div>
 
     <form (ngSubmit)="onSubmit()" class="login-form">
@@ -22,23 +21,25 @@
         <mat-icon matSuffix>lock</mat-icon>
       </mat-form-field>
 
-      <mat-form-field *ngIf="isFirstTime" appearance="outline" class="full-width">
-        <mat-label>Confirm Password</mat-label>
-        <input matInput type="password" [(ngModel)]="confirmPassword" name="confirmPassword"
-               placeholder="Confirm password" required>
-        <mat-icon matSuffix>lock</mat-icon>
-      </mat-form-field>
-
       <div *ngIf="error" class="error-message">
         <mat-icon>error</mat-icon>
         {{ error }}
       </div>
 
+      <div *ngIf="resetMessage" class="success-message">
+        <mat-icon>check_circle</mat-icon>
+        {{ resetMessage }}
+      </div>
+
       <button mat-raised-button color="primary" type="submit" class="full-width login-btn"
               [disabled]="loading || !email || !password">
         <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
-        <span *ngIf="!loading">{{ isFirstTime ? 'Create Account' : 'Sign In' }}</span>
+        <span *ngIf="!loading">Sign In</span>
       </button>
+
+      <div class="forgot-password">
+        <a (click)="forgotPassword()" class="forgot-link">Forgot Password?</a>
+      </div>
     </form>
   </div>
 </div>

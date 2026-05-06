@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { DojoService } from '../../core/services/dojo.service';
 import { SettingsService } from '../../core/services/settings.service';
+import { GoogleDriveService } from '../../core/services/google-drive.service';
 import { Dojo } from '../../core/models/dojo.model';
 
 @Component({
@@ -34,6 +35,7 @@ export class ShellComponent implements OnInit {
     private authService: AuthService,
     private dojoService: DojoService,
     private settingsService: SettingsService,
+    private driveService: GoogleDriveService,
     private router: Router
   ) {}
 
@@ -50,6 +52,7 @@ export class ShellComponent implements OnInit {
     this.dojoService.getSelectedDojo$().subscribe(id => {
       this.selectedDojoId = id;
     });
+    this.triggerAutoBackup();
   }
 
   async loadDojos() {
@@ -68,5 +71,17 @@ export class ShellComponent implements OnInit {
   async logout() {
     await this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  private triggerAutoBackup(): void {
+    if (this.driveService.needsBackupToday()) {
+      this.driveService.backup().then(result => {
+        if (!result.success) {
+          console.warn('Auto-backup failed:', result.error);
+        } else {
+          console.log('Auto-backup to Google Drive completed');
+        }
+      });
+    }
   }
 }
