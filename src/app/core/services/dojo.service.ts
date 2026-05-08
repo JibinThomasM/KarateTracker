@@ -54,6 +54,7 @@ export class DojoService {
   }
 
   async getById(id: string): Promise<Dojo | undefined> {
+    if (!id) return undefined;
     const doc = await firstValueFrom(this.afs.doc<Dojo>(`dojos/${id}`).get());
     return doc.exists ? { id: doc.id, ...doc.data()! } : undefined;
   }

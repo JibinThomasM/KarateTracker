@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { StudentService } from '../../../core/services/student.service';
 import { Student, BELT_RANKS } from '../../../core/models/student.model';
 import { StudentFormComponent } from '../student-form/student-form.component';
@@ -32,7 +33,7 @@ export class StudentListComponent implements OnInit, OnDestroy {
     this.breakpointObserver.observe([Breakpoints.Handset]).subscribe(result => {
       this.isMobile = result.matches;
     });
-    this.dojoSub = this.dojoService.getSelectedDojo$().subscribe(() => {
+    this.dojoSub = this.dojoService.getSelectedDojo$().pipe(filter((id: string) => !!id)).subscribe(() => {
       this.loadStudents();
     });
   }

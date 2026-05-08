@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { AttendanceService } from '../../../core/services/attendance.service';
 import { DojoService } from '../../../core/services/dojo.service';
 
@@ -25,7 +26,7 @@ export class MonthlyReportComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.dojoSub = this.dojoService.getSelectedDojo$().subscribe(() => {
+    this.dojoSub = this.dojoService.getSelectedDojo$().pipe(filter((id: string) => !!id)).subscribe(() => {
       this.loadReport();
     });
   }

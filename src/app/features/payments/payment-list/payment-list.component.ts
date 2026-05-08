@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { PaymentService } from '../../../core/services/payment.service';
 import { WhatsappService } from '../../../core/services/whatsapp.service';
@@ -50,7 +51,7 @@ export class PaymentListComponent implements OnInit, OnDestroy {
       this.loadPayments();
     });
 
-    this.dojoSub = this.dojoService.getSelectedDojo$().subscribe(() => {
+    this.dojoSub = this.dojoService.getSelectedDojo$().pipe(filter((id: string) => !!id)).subscribe(() => {
       this.loadPayments();
     });
   }

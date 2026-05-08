@@ -1,62 +1,18 @@
 <div class="backup-page">
   <h2>Backup & Restore</h2>
 
-  <!-- Google Drive Section -->
-  <mat-card class="section-card drive-card">
+  <!-- Auto Backup Info -->
+  <mat-card class="section-card">
     <mat-card-header>
-      <mat-icon class="section-icon drive-icon">cloud</mat-icon>
-      <mat-card-title>Google Drive Backup</mat-card-title>
-      <mat-card-subtitle *ngIf="!driveConnected">Connect your Google account for automatic cloud backups</mat-card-subtitle>
-      <mat-card-subtitle *ngIf="driveConnected">Connected — backups sync to your Drive</mat-card-subtitle>
+      <mat-icon class="section-icon drive-icon">cloud_done</mat-icon>
+      <mat-card-title>Automatic Cloud Backup</mat-card-title>
+      <mat-card-subtitle>Daily backups run automatically via GitHub Actions</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <!-- Not connected -->
-      <ng-container *ngIf="!driveConnected">
-        <p class="info-text">
-          Backups are saved to a "KarateTrackerBackups" folder in your Google Drive.
-          Last 7 backups are kept automatically.
-        </p>
-        <button mat-raised-button color="primary" (click)="connectDrive()" [disabled]="driveLoading" class="action-btn">
-          <mat-icon>login</mat-icon> Connect Google Drive
-        </button>
-      </ng-container>
-
-      <!-- Connected -->
-      <ng-container *ngIf="driveConnected">
-        <div class="drive-actions">
-          <button mat-raised-button color="primary" (click)="backupNow()" [disabled]="backingUp" class="action-btn">
-            <mat-icon>backup</mat-icon>
-            {{ backingUp ? 'Uploading...' : 'Backup Now' }}
-          </button>
-          <button mat-stroked-button color="warn" (click)="disconnectDrive()" class="action-btn">
-            <mat-icon>link_off</mat-icon> Disconnect
-          </button>
-        </div>
-
-        <!-- Backup list -->
-        <div class="drive-backups" *ngIf="!driveLoading && driveBackups.length > 0">
-          <h4>Cloud Backups</h4>
-          <div class="backup-item" *ngFor="let b of driveBackups">
-            <div class="backup-info">
-              <span class="backup-date">{{ formatDate(b.createdTime) }}</span>
-              <span class="backup-size">{{ formatSize(b.size) }}</span>
-            </div>
-            <button mat-icon-button color="primary" (click)="restoreFromDrive(b.id, b.name)" matTooltip="Restore this backup">
-              <mat-icon>restore</mat-icon>
-            </button>
-          </div>
-        </div>
-
-        <div *ngIf="!driveLoading && driveBackups.length === 0" class="no-backups">
-          No cloud backups yet. Tap "Backup Now" to create one.
-        </div>
-
-        <mat-spinner *ngIf="driveLoading" diameter="24" class="drive-spinner"></mat-spinner>
-      </ng-container>
-
-      <div *ngIf="driveMessage" class="import-message" [class.error]="driveError" [class.success]="!driveError">
-        {{ driveMessage }}
-      </div>
+      <p class="info-text">
+        Your Firestore data is automatically backed up every day at 6:00 AM IST.
+        Backups are kept for 7 days and can be downloaded from the GitHub Actions page.
+      </p>
     </mat-card-content>
   </mat-card>
 

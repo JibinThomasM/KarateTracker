@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { StudentService } from '../../core/services/student.service';
 import { AttendanceService } from '../../core/services/attendance.service';
 import { PaymentService } from '../../core/services/payment.service';
@@ -32,7 +33,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.dojoSub = this.dojoService.getSelectedDojo$().subscribe(() => {
+    this.dojoSub = this.dojoService.getSelectedDojo$().pipe(filter(id => !!id)).subscribe(() => {
       this.loadData();
     });
   }
