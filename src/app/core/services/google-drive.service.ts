@@ -80,6 +80,23 @@ export class GoogleDriveService {
     return lastBackup !== today;
   }
 
+  /** Verify the stored token is still valid */
+  async isTokenValid(): Promise<boolean> {
+    if (!this.accessToken) return false;
+    try {
+      const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
+        headers: { Authorization: `Bearer ${this.accessToken}` }
+      });
+      if (res.status === 401 || res.status === 403) {
+        this.disconnect();
+        return false;
+      }
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   /** Upload current DB to Google Drive */
   async backup(): Promise<{ success: boolean; error?: string }> {
     if (!this.accessToken) {

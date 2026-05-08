@@ -75,12 +75,18 @@ export class ShellComponent implements OnInit {
 
   private triggerAutoBackup(): void {
     if (this.driveService.needsBackupToday()) {
-      this.driveService.backup().then(result => {
-        if (!result.success) {
-          console.warn('Auto-backup failed:', result.error);
-        } else {
-          console.log('Auto-backup to Google Drive completed');
+      this.driveService.isTokenValid().then(valid => {
+        if (!valid) {
+          console.warn('Auto-backup skipped: Google Drive token expired. Reconnect from Backup page.');
+          return;
         }
+        this.driveService.backup().then(result => {
+          if (!result.success) {
+            console.warn('Auto-backup failed:', result.error);
+          } else {
+            console.log('Auto-backup to Google Drive completed');
+          }
+        });
       });
     }
   }

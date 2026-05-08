@@ -1,11 +1,15 @@
 import { Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
+import firebase from 'firebase/compat/app';
 import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  constructor(private afAuth: AngularFireAuth) {}
+  constructor(private afAuth: AngularFireAuth) {
+    // Require login each time the browser/tab is opened
+    this.afAuth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+  }
 
   isLoggedIn(): boolean {
     return !!this.afAuth.currentUser;

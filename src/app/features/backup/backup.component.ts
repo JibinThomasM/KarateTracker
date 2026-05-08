@@ -30,7 +30,15 @@ export class BackupComponent implements OnInit {
   ngOnInit() {
     this.driveConnected = this.driveService.isConnected();
     if (this.driveConnected) {
-      this.loadDriveBackups();
+      this.driveService.isTokenValid().then(valid => {
+        if (!valid) {
+          this.driveConnected = false;
+          this.driveMessage = 'Google Drive session expired. Please reconnect.';
+          this.driveError = true;
+        } else {
+          this.loadDriveBackups();
+        }
+      });
     }
   }
 
