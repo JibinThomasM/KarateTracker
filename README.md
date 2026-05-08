@@ -1,25 +1,8 @@
 # Indo-Japan Martial Arts Academy (IJMAA) — Karate Tracker
 
-A Progressive Web App (PWA) for managing karate classes across multiple dojos. Built entirely as a client-side application — no backend server required. All data is stored locally in the browser using SQLite (via WebAssembly) and persisted with IndexedDB.
+A Progressive Web App (PWA) for managing karate classes across multiple dojos. Built with Angular and Firebase — no backend server required. Data is stored in Cloud Firestore with offline support.
 
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Application Workflow](#application-workflow)
-- [Database Design](#database-design)
-- [Authentication](#authentication)
-- [Multi-Dojo Support](#multi-dojo-support)
-- [Backup & Restore](#backup--restore)
-- [Google Drive Integration](#google-drive-integration)
-- [Routing](#routing)
-- [Getting Started](#getting-started)
-- [Build & Deployment](#build--deployment)
-- [Configuration](#configuration)
+**Live App:** https://jibinthomasm.github.io/KarateTracker/
 
 ---
 
@@ -31,10 +14,12 @@ A Progressive Web App (PWA) for managing karate classes across multiple dojos. B
 - **Payment Tracking** — Generate monthly fee records, track paid/pending/overdue status
 - **Multi-Dojo Support** — Manage multiple dojo locations from a single app instance
 - **WhatsApp Reminders** — Send payment reminders via WhatsApp with customizable templates
-- **Google Drive Backup** — Automatic daily cloud backup with manual backup/restore
-- **Local Backup** — Export/import the entire database as a `.db` file
-- **Offline-First** — Runs entirely in the browser with no internet dependency (except Google Drive sync)
+- **Automatic Daily Backup** — GitHub Actions exports Firestore data daily (7-day retention)
+- **Local Backup** — Export/import the entire database as a `.json` file
+- **Offline Support** — Firestore offline persistence with multi-tab sync
 - **Responsive UI** — Mobile-first design with bottom navigation (mobile) and side navigation (desktop)
+- **Session-based Auth** — Login required each time the browser is opened
+- **Email Allowlist** — Only authorized emails can access the app
 
 ---
 
@@ -44,12 +29,13 @@ A Progressive Web App (PWA) for managing karate classes across multiple dojos. B
 |---|---|
 | **Angular 15** | Frontend framework |
 | **Angular Material 15 (MDC)** | UI component library |
-| **sql.js** | SQLite compiled to WebAssembly — full SQL database in the browser |
-| **idb** | Promise-based IndexedDB wrapper for persisting the SQLite database file |
-| **RxJS** | Reactive state management (dojo selection, data refresh) |
+| **Firebase 9 (compat)** | Authentication + Cloud Firestore |
+| **@angular/fire 7** | Angular bindings for Firebase |
+| **RxJS** | Reactive state management |
 | **TypeScript 4.9** | Type-safe development |
 | **SCSS** | Component styling |
-| **Google Drive API v3** | Cloud backup via OAuth 2.0 implicit flow |
+| **GitHub Actions** | Automated daily Firestore backup |
+| **GitHub Pages** | Static hosting |
 
 ---
 
@@ -57,52 +43,36 @@ A Progressive Web App (PWA) for managing karate classes across multiple dojos. B
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                     Browser (Client)                     │
+│                     Browser (Client)                      │
 │                                                          │
 │  ┌──────────────┐    ┌──────────────┐    ┌────────────┐ │
-│  │   Angular     │    │   sql.js     │    │  IndexedDB │ │
-│  │   App UI      │───▶│   (SQLite    │───▶│  (Binary   │ │
-│  │   (Material)  │    │    WASM)     │    │   .db)     │ │
+│  │   Angular     │    │  Firestore   │    │  IndexedDB │ │
+│  │   App UI      │───▶│  (Cloud DB)  │───▶│  (Offline  │ │
+│  │   (Material)  │    │              │    │   Cache)   │ │
 │  └──────────────┘    └──────────────┘    └────────────┘ │
-│         │                                       │        │
-│         │            ┌──────────────┐           │        │
-│         └───────────▶│ Google Drive │◀──────────┘        │
-│           (OAuth2)   │   API v3     │  (backup file)     │
+│         │                                                │
+│         │            ┌──────────────┐                    │
+│         └───────────▶│ Firebase Auth │                   │
+│                      │ (Email/Pass)  │                   │
 │                      └──────────────┘                    │
 └─────────────────────────────────────────────────────────┘
-```
 
-### Layered Architecture
-
-```
-┌─────────────────────────────────────────────┐
-│              Feature Modules                 │
-│  (Dashboard, Students, Attendance,           │
-│   Payments, Settings, Backup, Login)         │
-├─────────────────────────────────────────────┤
-│              Shared Module                   │
-│  (ConfirmDialog, AlertDialog)                │
-├─────────────────────────────────────────────┤
-│              Core Services                   │
-│  (Database, Auth, Student, Attendance,       │
-│   Payment, Dojo, Settings, WhatsApp,         │
-│   GoogleDrive)                               │
-├─────────────────────────────────────────────┤
-│              Core Models                     │
-│  (Student, Attendance, Payment, Dojo)        │
-├─────────────────────────────────────────────┤
-│              Database Layer                  │
-│  (sql.js SQLite WASM + idb IndexedDB)        │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                  GitHub Actions (Server)                  │
+│                                                          │
+│  Daily cron → firebase-admin → Export Firestore → Artifact│
+└─────────────────────────────────────────────────────────┘
 ```
 
 ### Key Architectural Decisions
 
-1. **No Backend** — The entire application runs in the browser. SQLite (via WebAssembly) provides a full relational database without any server.
-2. **IndexedDB Persistence** — The SQLite database binary is serialized and stored in IndexedDB after every write operation, ensuring data survives page refreshes.
-3. **Lazy-Loaded Feature Modules** — Each feature is a separate Angular module loaded on demand, keeping the initial bundle small (~913 KB).
-4. **Hash Routing** — Uses `useHash: true` for compatibility with GitHub Pages (which doesn't support server-side URL rewriting).
-5. **Reactive Dojo Selection** — `DojoService` exposes a `BehaviorSubject` that all feature components subscribe to, enabling instant data refresh when the user switches dojos.
+1. **Firebase Backend** — Firestore for data, Firebase Auth for login. No custom server needed.
+2. **Offline Persistence** — Firestore's `enablePersistence` with `synchronizeTabs: true` allows offline usage.
+3. **Session Auth** — Firebase persistence set to `SESSION` so login is required after closing the browser.
+4. **Lazy-Loaded Feature Modules** — Each feature is a separate Angular module loaded on demand.
+5. **Hash Routing** — Uses `useHash: true` for GitHub Pages SPA compatibility.
+6. **Reactive Dojo Selection** — `DojoService` exposes a `BehaviorSubject` that all components subscribe to.
+7. **Client-side Sorting** — Avoids Firestore composite index requirements by sorting in the app.
 
 ---
 
@@ -111,33 +81,29 @@ A Progressive Web App (PWA) for managing karate classes across multiple dojos. B
 ```
 src/
 ├── app/
-│   ├── app.module.ts                    # Root module with APP_INITIALIZER
+│   ├── app.module.ts                    # Root module with Firebase init
 │   ├── app-routing.module.ts            # Route definitions with lazy loading
-│   ├── app.component.ts                 # Root component
 │   │
 │   ├── core/                            # Singleton services & models
-│   │   ├── db/
-│   │   │   └── migrations.ts            # Schema migrations (versioned)
 │   │   ├── guards/
-│   │   │   └── auth.guard.ts            # Route protection
+│   │   │   └── auth.guard.ts            # Route protection (AngularFireAuth)
 │   │   ├── models/
 │   │   │   ├── student.model.ts         # Student interface + BELT_RANKS
 │   │   │   ├── attendance.model.ts      # Attendance & AttendanceRecord
 │   │   │   ├── payment.model.ts         # Payment, PaymentRecord, FeePlan
 │   │   │   └── dojo.model.ts            # Dojo interface
 │   │   └── services/
-│   │       ├── database.service.ts      # sql.js init, IndexedDB persistence
-│   │       ├── auth.service.ts          # SHA-256 password hashing, session
+│   │       ├── database.service.ts      # Firestore export/import (JSON)
+│   │       ├── auth.service.ts          # Firebase Auth (login, password reset/change)
 │   │       ├── student.service.ts       # Student CRUD (dojo-scoped)
 │   │       ├── attendance.service.ts    # Attendance CRUD + monthly report
 │   │       ├── payment.service.ts       # Payments, fee plans, overdue logic
 │   │       ├── dojo.service.ts          # Dojo CRUD + selection management
-│   │       ├── settings.service.ts      # Key-value settings
-│   │       ├── whatsapp.service.ts      # WhatsApp URL builder
-│   │       └── google-drive.service.ts  # Google Drive OAuth + backup
+│   │       ├── settings.service.ts      # Key-value settings (Firestore doc)
+│   │       └── whatsapp.service.ts      # WhatsApp URL builder
 │   │
 │   ├── features/                        # Lazy-loaded feature modules
-│   │   ├── login/                       # Login & first-time password setup
+│   │   ├── login/                       # Email/password login + forgot password
 │   │   ├── shell/                       # App shell (toolbar, sidenav, bottom nav)
 │   │   ├── dashboard/                   # Overview: stats, overdue alerts
 │   │   ├── students/                    # Student list + add/edit form
@@ -146,226 +112,113 @@ src/
 │   │   │   └── monthly-report/          # Monthly attendance summary table
 │   │   ├── payments/
 │   │   │   └── payment-list/            # Payment records, generate fees, reminders
-│   │   ├── settings/                    # Currency, due day, WhatsApp, fee plans, dojos
-│   │   └── backup/                      # Local export/import + Google Drive backup
+│   │   ├── settings/                    # Currency, due day, WhatsApp, fee plans, dojos, change password
+│   │   └── backup/                      # Local export/import
 │   │
 │   └── shared/                          # Shared UI components
-│       ├── shared.module.ts
-│       ├── confirm-dialog/              # Yes/No confirmation dialog
-│       └── alert-dialog/                # Info/warning/success alert dialog
+│       ├── confirm-dialog/
+│       └── alert-dialog/
+│
+├── environments/
+│   ├── environment.ts                   # Dev config (Firebase + allowedEmails)
+│   └── environment.prod.ts             # Production config
 │
 ├── assets/
-│   ├── logo.jpeg                        # Academy logo
-│   └── sql-wasm.wasm                    # SQLite WebAssembly binary
+│   └── logo.jpeg                        # Academy logo
 │
-├── typings/
-│   └── sql.js.d.ts                      # Custom type declarations for sql.js
-│
-├── index.html                           # App entry point
+├── index.html
 ├── 404.html                             # GitHub Pages SPA redirect
 └── styles.scss                          # Global styles + Material theme
+
+scripts/
+└── firestore-backup.js                  # Node.js script for GitHub Actions backup
+
+.github/workflows/
+└── firestore-backup.yml                 # Daily cron backup workflow
 ```
 
 ---
 
-## Application Workflow
+## Firestore Data Model
 
-### First-Time Setup
+### Collections
 
-```
-User opens app → No password set → Prompt to create password
-                                   → Password hashed (SHA-256)
-                                   → Stored in settings table
-                                   → Redirected to Dashboard
-```
+**`settings`** — Single document (`settings/config`) with key-value pairs
 
-### Daily Usage Flow
+**`dojos`** — Dojo/location documents
+| Field | Type |
+|-------|------|
+| name | string |
+| location | string |
+| phone | string |
+| isActive | boolean |
 
-```
-1. Login (password verified against stored hash)
-   └─→ Auto Google Drive backup (if connected & not backed up today)
+**`students`** — Student documents
+| Field | Type |
+|-------|------|
+| name | string |
+| whatsappNumber | string |
+| beltRank | string |
+| joinDate | string |
+| isActive | boolean |
+| dojoId | string |
+| feePlanId | string (optional) |
 
-2. Dashboard shows:
-   ├── Today's attendance status
-   ├── Total active students
-   ├── Overdue payment count & amount
-   └── Quick links to key actions
+**`attendance`** — Attendance documents (ID: `{studentId}_{date}`)
+| Field | Type |
+|-------|------|
+| studentId | string |
+| studentName | string |
+| beltRank | string |
+| dojoId | string |
+| date | string |
+| status | string ('present' / 'absent') |
 
-3. Attendance (daily):
-   ├── Select date (prev/next navigation)
-   ├── Tap students to toggle present/absent
-   ├── Bulk mark all present/absent
-   └── Save attendance
+**`feePlans`** — Fee plan documents
+| Field | Type |
+|-------|------|
+| name | string |
+| monthlyAmount | number |
+| dojoId | string |
 
-4. Attendance (monthly report):
-   ├── Select month (prev/next navigation)
-   └── View per-student: Present(P), Absent(A), Percentage(%)
-
-5. Payments:
-   ├── Generate monthly fees (creates records for active students)
-   ├── View by month or filter by status
-   ├── Mark individual payments as paid
-   └── Send WhatsApp reminders for overdue
-
-6. Students:
-   ├── Add/edit student details
-   ├── Assign belt rank, fee plan
-   └── View active/inactive students
-
-7. Settings:
-   ├── Currency, default due day
-   ├── WhatsApp message template
-   ├── Fee plan management
-   ├── Dojo management (add/edit/delete)
-   └── Change password
-```
-
-### Dojo Switching
-
-```
-User selects dojo (toolbar/sidenav)
-  → DojoService.selectDojo() emits new value
-  → All subscribed components reload data for new dojo
-  → Students, attendance, payments all scoped to selected dojo
-```
+**`payments`** — Payment documents (ID: `{studentId}_{monthYear}`)
+| Field | Type |
+|-------|------|
+| studentId | string |
+| studentName | string |
+| whatsappNumber | string |
+| dojoId | string |
+| monthYear | string |
+| amountDue | number |
+| amountPaid | number |
+| dueDate | string |
+| paidDate | string |
+| status | string ('pending' / 'paid' / 'overdue') |
 
 ---
 
-## Database Design
+## Authentication & Security
 
-### Schema (Managed via Migrations)
-
-**`settings`** — Key-value configuration store
-| Column | Type |
-|--------|------|
-| key | TEXT PRIMARY KEY |
-| value | TEXT |
-
-**`dojos`** — Dojo/location management
-| Column | Type |
-|--------|------|
-| id | INTEGER PRIMARY KEY |
-| name | TEXT NOT NULL |
-| location | TEXT |
-| phone | TEXT |
-| is_active | INTEGER DEFAULT 1 |
-
-**`students`** — Student records
-| Column | Type |
-|--------|------|
-| id | INTEGER PRIMARY KEY |
-| name | TEXT NOT NULL |
-| phone | TEXT |
-| whatsapp_number | TEXT |
-| belt_rank | TEXT |
-| join_date | TEXT |
-| is_active | INTEGER DEFAULT 1 |
-| dojo_id | INTEGER NOT NULL DEFAULT 1 |
-
-**`attendance`** — Daily attendance records
-| Column | Type |
-|--------|------|
-| id | INTEGER PRIMARY KEY |
-| student_id | INTEGER (FK → students) |
-| date | TEXT |
-| status | TEXT ('present' or 'absent') |
-| UNIQUE | (student_id, date) |
-
-**`fee_plans`** — Fee plan templates
-| Column | Type |
-|--------|------|
-| id | INTEGER PRIMARY KEY |
-| name | TEXT |
-| monthly_amount | REAL |
-| dojo_id | INTEGER NOT NULL DEFAULT 1 |
-
-**`student_fee_plan`** — Links students to fee plans
-| Column | Type |
-|--------|------|
-| student_id | INTEGER (FK → students) |
-| fee_plan_id | INTEGER (FK → fee_plans) |
-
-**`payments`** — Monthly payment records
-| Column | Type |
-|--------|------|
-| id | INTEGER PRIMARY KEY |
-| student_id | INTEGER (FK → students) |
-| month_year | TEXT (e.g., '2026-05') |
-| amount_due | REAL |
-| amount_paid | REAL |
-| due_date | TEXT |
-| paid_date | TEXT |
-| status | TEXT ('pending', 'paid', 'overdue') |
-
-### Migration System
-
-- Schema version tracked in `settings` table (`schema_version` key)
-- Migrations defined in `core/db/migrations.ts` as versioned SQL arrays
-- Run sequentially on app startup — only applies migrations newer than current version
-- Current schema version: **2**
-  - v1: Initial schema (all tables, seed data, indexes)
-  - v2: Added `dojos` table, `dojo_id` columns to `students` and `fee_plans`
+- **Firebase Auth** (Email/Password) — accounts created manually in Firebase Console
+- **Session persistence** — login required each time the browser is opened
+- **Email allowlist** — `environment.allowedEmails` restricts which emails can log in (UI-level)
+- **Forgot Password** — sends Firebase password reset email
+- **Change Password** — available in Settings (requires current password)
+- **Firestore Rules** — recommended server-side restriction by email (see Security section below)
 
 ---
 
-## Authentication
+## Backup Strategy
 
-- **Client-side only** — acts as a UI gate, not server-grade security
-- Password hashed using **SHA-256** via `crypto.subtle.digest()`
-- Hash stored in `settings` table (key: `admin_password`)
-- Session tracked via `sessionStorage` — cleared when tab closes
-- Route protection via `AuthGuard` on all routes except `/login`
+### Automatic (GitHub Actions)
+- Runs daily at **6:00 AM IST** (cron: `30 0 * * *`)
+- Uses `firebase-admin` SDK with a service account to export all collections
+- Backup stored as a GitHub Actions **artifact** (7-day retention)
+- Can be triggered manually from the Actions tab
 
----
-
-## Multi-Dojo Support
-
-- Each dojo has its own students, fee plans, and attendance records
-- `DojoService` manages dojo selection via `BehaviorSubject<number>`
-- Selection persisted to `localStorage` across sessions
-- All data services (`StudentService`, `AttendanceService`, `PaymentService`) filter queries by `dojo_id`
-- Deleting a dojo cascade-deletes all associated data (students, attendance, payments, fee plans)
-- Dojo selector shown in toolbar (mobile) and sidenav (desktop) — hidden when only 1 dojo exists
-
----
-
-## Backup & Restore
-
-### Local Backup
-- **Export**: Downloads the entire SQLite database as a `.db` file
-- **Import**: Upload a `.db` file to replace all current data (with confirmation dialog)
-
-### Google Drive Backup
-- Uses **OAuth 2.0 implicit flow** with `drive.file` scope
-- Backups stored in a `KarateTrackerBackups` folder in the admin's Google Drive
-- **Auto-backup**: Triggers silently on first login of each day
-- **Manual backup**: "Backup Now" button on the Backup page
-- **Restore**: Select any cloud backup to restore from
-- **Cleanup**: Automatically keeps only the last 7 backups
-- OAuth Client ID configured in `google-drive.service.ts`
-
----
-
-## Routing
-
-| Route | Module | Description |
-|-------|--------|-------------|
-| `/login` | LoginModule | Login / first-time password setup |
-| `/dashboard` | DashboardModule | Overview stats and quick actions |
-| `/students` | StudentsModule | Student list |
-| `/students/add` | StudentsModule | Add new student |
-| `/students/edit/:id` | StudentsModule | Edit existing student |
-| `/attendance` | AttendanceModule | Daily attendance marking |
-| `/attendance/monthly` | AttendanceModule | Monthly attendance report |
-| `/payments` | PaymentsModule | Payment list with generate/filter |
-| `/settings` | SettingsModule | App configuration |
-| `/backup` | BackupModule | Backup & restore (local + Google Drive) |
-
-All routes except `/login` are protected by `AuthGuard`. The app shell (`ShellComponent`) wraps all authenticated routes with toolbar and navigation.
-
-**Mobile Navigation (bottom nav):** Dashboard, Students, Attendance, Payments
-
-**More Menu (3-dot icon):** Settings, Backup, Logout
+### Local (In-App)
+- **Export**: Downloads all Firestore data as a `.json` file
+- **Import**: Upload a `.json` file to restore all data (with confirmation)
 
 ---
 
@@ -380,7 +233,7 @@ All routes except `/login` are protected by `AuthGuard`. The app shell (`ShellCo
 ### Installation
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/JibinThomasM/KarateTracker.git
 cd karate-tracker
 npm install
 ```
@@ -391,20 +244,19 @@ npm install
 ng serve
 ```
 
-Navigate to `http://localhost:4200/`. The app reloads on source changes.
+Navigate to `http://localhost:4200/`.
 
 ### First Run
 
-1. Open the app in a browser
-2. Set an admin password (minimum 4 characters)
-3. Go to **Settings** to configure:
+1. Create a user account in **Firebase Console → Authentication → Add User**
+2. Add the email to `allowedEmails` in `src/environments/environment.ts`
+3. Open the app and log in
+4. Go to **Settings** to configure:
    - Currency symbol
    - Default payment due day
    - WhatsApp message template
    - Add fee plans
-   - Add additional dojos (optional)
-4. Go to **Students** to add students
-5. Start tracking attendance and payments
+   - Add dojos
 
 ---
 
@@ -413,50 +265,61 @@ Navigate to `http://localhost:4200/`. The app reloads on source changes.
 ### Production Build
 
 ```bash
-ng build
+ng build --configuration production --base-href /KarateTracker/
 ```
 
-Output is in `dist/karate-tracker/`. All files are static — deploy to any static hosting.
+### Deploy to GitHub Pages
 
-### GitHub Pages Deployment
+```bash
+npx angular-cli-ghpages --dir=dist/karate-tracker
+```
 
-The app is configured for GitHub Pages:
-- Hash routing (`useHash: true`) avoids 404 issues on direct URL access
-- `404.html` included as a fallback SPA redirect
-- Deploy the contents of `dist/karate-tracker/` to your GitHub Pages branch
+### Setup GitHub Actions Backup
 
-### Google Drive Setup (Optional)
+1. Go to Firebase Console → Project Settings → Service Accounts
+2. Generate a new private key (JSON)
+3. In GitHub repo → Settings → Secrets → Actions, add `FIREBASE_SERVICE_ACCOUNT_KEY` with the JSON contents
+4. The workflow runs automatically daily; trigger manually from the Actions tab to test
 
-To enable Google Drive backup:
+---
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a project and enable the **Google Drive API**
-3. Create an **OAuth 2.0 Client ID** (Web application type)
-4. Add your deployed URL as an **Authorized JavaScript origin**
-5. The Client ID is already configured in `google-drive.service.ts`
+## Security Recommendations
+
+Add these Firestore rules in Firebase Console → Firestore → Rules:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.token.email in ['your-email@gmail.com'];
+    }
+  }
+}
+```
+
+This ensures only authorized users can access data even if someone bypasses the client-side checks.
 
 ---
 
 ## Configuration
 
-### Settings (In-App)
+### Environment Files
+
+| Setting | Description |
+|---------|-------------|
+| `firebase` | Firebase project config (apiKey, projectId, etc.) |
+| `allowedEmails` | Array of emails authorized to log in |
+| `production` | Production mode flag |
+
+### In-App Settings
 
 | Setting | Description | Default |
 |---------|-------------|---------|
 | Currency | Currency symbol for payment display | ₹ |
 | Default Due Day | Day of month for payment due dates | 5 |
 | WhatsApp Template | Message template for payment reminders | — |
-
-### Build Configuration (angular.json)
-
-| Setting | Value |
-|---------|-------|
-| Initial bundle warning | 1 MB |
-| Initial bundle error | 2 MB |
-| Component style warning | 4 KB |
-| Component style error | 8 KB |
-| Output path | `dist/karate-tracker` |
-| Style preprocessor | SCSS |
 
 ---
 
