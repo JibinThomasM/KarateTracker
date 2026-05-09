@@ -107,10 +107,10 @@
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Message Template</mat-label>
         <textarea matInput [(ngModel)]="whatsappTemplate" rows="4"></textarea>
-        <mat-hint>
-          Variables: &#123;name&#125;, &#123;amount&#125;, &#123;month&#125;, &#123;currency&#125;
-        </mat-hint>
       </mat-form-field>
+      <div class="template-variables-hint">
+        Variables: &#123;name&#125;, &#123;amount&#125;, &#123;month&#125;, &#123;currency&#125;
+      </div>
       <button mat-raised-button [color]="savedButton === 'whatsapp' ? 'accent' : 'primary'" (click)="saveWhatsApp()" class="save-btn">
         <mat-icon>{{ savedButton === 'whatsapp' ? 'check_circle' : 'save' }}</mat-icon>
         {{ savedButton === 'whatsapp' ? 'Saved!' : 'Save' }}
