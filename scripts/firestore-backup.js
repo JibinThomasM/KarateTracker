@@ -10,7 +10,7 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-const COLLECTIONS = ['dojos', 'students', 'attendance', 'payments', 'settings', 'feePlans'];
+const COLLECTIONS = ['dojos', 'students', 'attendance', 'payments', 'settings', 'feePlans', 'reminders'];
 
 async function exportCollection(collectionName) {
   const snapshot = await db.collection(collectionName).get();

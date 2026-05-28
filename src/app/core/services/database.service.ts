@@ -8,7 +8,7 @@ import { firstValueFrom } from 'rxjs';
  */
 @Injectable({ providedIn: 'root' })
 export class DatabaseService {
-  private readonly collections = ['dojos', 'students', 'attendance', 'payments', 'feePlans', 'settings'];
+  private readonly collections = ['dojos', 'students', 'attendance', 'payments', 'feePlans', 'settings', 'reminders'];
 
   constructor(private afs: AngularFirestore) {}
 

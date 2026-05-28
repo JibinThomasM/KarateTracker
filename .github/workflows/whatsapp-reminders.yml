@@ -1,0 +1,34 @@
+name: WhatsApp Payment Reminders
+
+on:
+  schedule:
+    - cron: '30 3 * * *' # Daily at 9:00 AM IST (03:30 UTC)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — logs what would be sent without calling WhatsApp API'
+        type: boolean
+        default: false
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install firebase-admin
+        run: npm install firebase-admin
+
+      - name: Send payment reminders
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: node scripts/whatsapp-reminders.js

@@ -20,3 +20,14 @@ export interface FeePlan {
   name: string;
   monthlyAmount: number;
 }
+
+export interface Reminder {
+  id?: string;
+  paymentId: string;
+  studentId: string;
+  dojoId: string;
+  studentName: string;
+  whatsappNumber: string;
+  sentAt: string;
+  monthYear: string;
+}
