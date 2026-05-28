@@ -1,10 +1,18 @@
 <div class="payments-page">
   <div class="page-header">
     <h2>Payments</h2>
-    <button mat-raised-button color="primary" (click)="generateFees()" class="generate-btn">
-      <mat-icon>add_circle</mat-icon>
-      Generate Fees
-    </button>
+    <div class="header-actions">
+      <button mat-raised-button class="send-all-btn" (click)="sendAllReminders()"
+              [disabled]="sendingAll || getUnpaidWithPhone().length === 0">
+        <mat-icon>textsms</mat-icon>
+        <span *ngIf="!sendingAll">Send All Reminders ({{ getUnpaidWithPhone().length }})</span>
+        <span *ngIf="sendingAll">Sending {{ sendProgress.current }}/{{ sendProgress.total }}...</span>
+      </button>
+      <button mat-raised-button color="primary" (click)="generateFees()" class="generate-btn">
+        <mat-icon>add_circle</mat-icon>
+        Generate Fees
+      </button>
+    </div>
   </div>
 
   <!-- Filters -->
@@ -44,6 +52,9 @@
           <span>Due: {{ currency }}{{ p.amountDue | number:'1.0-0' }}</span>
           <span>Paid: {{ currency }}{{ p.amountPaid | number:'1.0-0' }}</span>
           <span>Due by: {{ p.dueDate }}</span>
+          <span class="reminder-badge" *ngIf="getLastReminderDate(p.id!)">
+            <mat-icon>schedule</mat-icon> Reminded: {{ getLastReminderDate(p.id!) }}
+          </span>
         </div>
         <div class="card-actions">
           <button mat-stroked-button color="primary" *ngIf="p.status !== 'paid'" (click)="markPaid(p)"
@@ -102,10 +113,12 @@
             <mat-icon>check_circle</mat-icon>
           </button>
           <button mat-icon-button *ngIf="p.status !== 'paid'"
-                  (click)="sendWhatsappReminder(p)" matTooltip="Send WhatsApp Reminder"
+                  (click)="sendWhatsappReminder(p)"
+                  [matTooltip]="getLastReminderDate(p.id!) ? 'Last reminded: ' + getLastReminderDate(p.id!) : 'Send WhatsApp Reminder'"
                   class="whatsapp-icon-btn">
             <mat-icon>textsms</mat-icon>
           </button>
+          <span class="reminder-hint" *ngIf="getLastReminderDate(p.id!)">{{ getLastReminderDate(p.id!) }}</span>
         </td>
       </ng-container>
 

@@ -72,6 +72,10 @@
         <mat-icon>warning</mat-icon>
         View Overdue ({{ overdueCount }})
       </button>
+      <button mat-raised-button class="send-reminders-btn" (click)="goToOverdue()" *ngIf="overdueCount > 0">
+        <mat-icon>textsms</mat-icon>
+        Send Reminders
+      </button>
     </div>
   </div>
 </div>

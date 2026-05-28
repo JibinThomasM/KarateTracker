@@ -13,7 +13,7 @@ A Progressive Web App (PWA) for managing karate classes across multiple dojos. B
 - **Monthly Attendance Report** — View per-student attendance summary with percentage for any month
 - **Payment Tracking** — Generate monthly fee records, track paid/pending/overdue status
 - **Multi-Dojo Support** — Manage multiple dojo locations from a single app instance
-- **WhatsApp Reminders** — Send payment reminders via WhatsApp with customizable templates
+- **WhatsApp Reminders** — Send payment reminders via WhatsApp with customizable templates, bulk "Send All Reminders" for overdue payments, and reminder tracking
 - **Automatic Daily Backup** — GitHub Actions exports Firestore data daily (7-day retention)
 - **Local Backup** — Export/import the entire database as a `.json` file
 - **Offline Support** — Firestore offline persistence with multi-tab sync
@@ -90,7 +90,7 @@ src/
 │   │   ├── models/
 │   │   │   ├── student.model.ts         # Student interface + BELT_RANKS
 │   │   │   ├── attendance.model.ts      # Attendance & AttendanceRecord
-│   │   │   ├── payment.model.ts         # Payment, PaymentRecord, FeePlan
+│   │   │   ├── payment.model.ts         # Payment, PaymentRecord, FeePlan, Reminder
 │   │   │   └── dojo.model.ts            # Dojo interface
 │   │   └── services/
 │   │       ├── database.service.ts      # Firestore export/import (JSON)
@@ -194,6 +194,17 @@ scripts/
 | dueDate | string |
 | paidDate | string |
 | status | string ('pending' / 'paid' / 'overdue') |
+
+**`reminders`** — Reminder tracking documents
+| Field | Type |
+|-------|------|
+| paymentId | string |
+| studentId | string |
+| studentName | string |
+| whatsappNumber | string |
+| dojoId | string |
+| sentAt | string (ISO timestamp) |
+| monthYear | string |
 
 ---
 

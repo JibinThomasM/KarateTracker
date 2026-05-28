@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { DojoService } from './dojo.service';
 import { SettingsService } from './settings.service';
 import { StudentService } from './student.service';
-import { Payment, PaymentRecord, FeePlan } from '../models/payment.model';
+import { Payment, PaymentRecord, FeePlan, Reminder } from '../models/payment.model';
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
@@ -174,5 +174,45 @@ export class PaymentService {
       ).get()
     );
     return snapshot.docs.reduce((sum, doc) => sum + (doc.data().amountPaid || 0), 0);
+  }
+
+  async recordReminder(payment: PaymentRecord): Promise<void> {
+    await this.afs.collection('reminders').add({
+      paymentId: payment.id,
+      studentId: payment.studentId,
+      dojoId: this.dojoId,
+      studentName: payment.studentName,
+      whatsappNumber: payment.whatsappNumber,
+      sentAt: new Date().toISOString(),
+      monthYear: payment.monthYear
+    } as Reminder);
+  }
+
+  async getLastReminder(paymentId: string): Promise<Reminder | null> {
+    const snapshot = await firstValueFrom(
+      this.afs.collection<Reminder>('reminders', ref =>
+        ref.where('paymentId', '==', paymentId).orderBy('sentAt', 'desc').limit(1)
+      ).get()
+    );
+    if (snapshot.empty) return null;
+    const doc = snapshot.docs[0];
+    return { id: doc.id, ...doc.data() };
+  }
+
+  async getRemindersByMonth(monthYear: string): Promise<Map<string, Reminder>> {
+    const snapshot = await firstValueFrom(
+      this.afs.collection<Reminder>('reminders', ref =>
+        ref.where('dojoId', '==', this.dojoId).where('monthYear', '==', monthYear)
+      ).get()
+    );
+    const map = new Map<string, Reminder>();
+    snapshot.docs.forEach(doc => {
+      const data = { id: doc.id, ...doc.data() };
+      const existing = map.get(data.paymentId);
+      if (!existing || data.sentAt > existing.sentAt) {
+        map.set(data.paymentId, data);
+      }
+    });
+    return map;
   }
 }

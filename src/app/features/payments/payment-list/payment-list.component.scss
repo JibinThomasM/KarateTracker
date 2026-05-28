@@ -14,10 +14,28 @@
 
   h2 { margin: 0; font-size: 22px; }
 
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
   .generate-btn {
     height: 44px;
     border-radius: 8px;
     mat-icon { margin-right: 4px; }
+  }
+
+  .send-all-btn {
+    height: 44px;
+    border-radius: 8px;
+    background: #25d366;
+    color: white;
+    mat-icon { margin-right: 4px; }
+    &:disabled {
+      background: #ccc;
+      color: #888;
+    }
   }
 }
 
@@ -129,6 +147,26 @@
 
 .whatsapp-icon-btn {
   color: #25d366 !important;
+}
+
+.reminder-hint {
+  font-size: 11px;
+  color: #999;
+  margin-left: -4px;
+}
+
+.reminder-badge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #25d366;
+  font-size: 12px;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
 }
 
 .empty-state {
